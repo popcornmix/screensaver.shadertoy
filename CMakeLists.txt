@@ -1,4 +1,4 @@
-project(visualization.shadertoy)
+project(screensaver.shadertoy)
 
 cmake_minimum_required(VERSION 2.6)
 
@@ -27,15 +27,12 @@ endif()
 include_directories(${OpenGL_INCLUDE_DIR}
                     ${GLEW_INCLUDE_DIR}
                     ${KODI_INCLUDE_DIR}
-                    ${PROJECT_SOURCE_DIR}/lib/kissfft
                     ${CMAKE_INCLUDE_PATH})
-
-add_subdirectory(lib/kissfft)
 
 set(SHADERTOY_SOURCES src/lodepng.cpp
                       src/main.cpp)
 
-set(DEPLIBS ${OPENGL_LIBRARIES} ${GLEW_LIBRARIES} kissfft)
+set(DEPLIBS ${OPENGL_LIBRARIES} ${GLEW_LIBRARIES})
 
 if(APPLE)
   set(DEPLIBS ${DEPLIBS} "-framework CoreVideo")
@@ -43,6 +40,6 @@ endif()
 
 add_options(CXX ALL_BUILDS -std=c++11)
 
-build_addon(visualization.shadertoy SHADERTOY DEPLIBS)
+build_addon(screensaver.shadertoy SHADERTOY DEPLIBS)
 
 include(CPack)

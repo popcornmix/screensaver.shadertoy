@@ -18,7 +18,7 @@
  *
  */
 
-#include "kodi/xbmc_vis_dll.h"
+#include "kodi/xbmc_scr_dll.h"
 #if defined(HAS_GLES)
 #include <GLES2/gl2.h>
 #include <EGL/egl.h>
@@ -41,7 +41,6 @@
 #include <fstream>
 #include <sstream>
 
-#include "kiss_fft.h"
 #include "lodepng.h"
 
 using namespace std;
@@ -143,7 +142,7 @@ struct
 int g_numberTextures = 17;
 GLint g_textures[17] = { };
 
-void LogProps(VIS_PROPS *props) {
+void LogProps(SCR_PROPS *props) {
   cout << "Props = {" << endl
        << "\t x: " << props->x << endl
        << "\t y: " << props->y << endl
@@ -157,23 +156,6 @@ void LogProps(VIS_PROPS *props) {
        << "}" << endl;
 }
 
-void LogTrack(VisTrack *track) {
-  cout << "Track = {" << endl
-       << "\t title: " << track->title << endl
-       << "\t artist: " << track->artist << endl
-       << "\t album: " << track->album << endl
-       << "\t albumArtist: " << track->albumArtist << endl
-       << "\t genre: " << track->genre << endl
-       << "\t comment: " << track->comment << endl
-       << "\t lyrics: " << track->lyrics << endl
-       << "\t trackNumber: " << track->trackNumber << endl
-       << "\t discNumber: " << track->discNumber << endl
-       << "\t duration: " << track->duration << endl
-       << "\t year: " << track->year << endl
-       << "\t rating: " << track->rating << endl
-       << "}" << endl;
-}
-
 void LogAction(const char *message) {
   cout << "Action " << message << endl;
 }
@@ -182,38 +164,7 @@ void LogActionString(const char *message, const char *param) {
   cout << "Action " << message << " " << param << endl;
 }
 
-float blackmanWindow(float in, size_t i, size_t length) {
-  double alpha = 0.16;
-  double a0 = 0.5 * (1.0 - alpha);
-  double a1 = 0.5;
-  double a2 = 0.5 * alpha;
-
-  float x = (float)i / (float)length;
-  return in * (a0 - a1 * cos(2.0 * M_PI * x) + a2 * cos(4.0 * M_PI * x));
-}
-
-void smoothingOverTime(float *outputBuffer, float *lastOutputBuffer, kiss_fft_cpx *inputBuffer, size_t length, float smoothingTimeConstant, unsigned int fftSize) {
-  for (size_t i = 0; i < length; i++) {
-    kiss_fft_cpx c = inputBuffer[i];
-    float magnitude = sqrt(c.r * c.r + c.i * c.i) / (float)fftSize;
-    outputBuffer[i] = smoothingTimeConstant * lastOutputBuffer[i] + (1.0 - smoothingTimeConstant) * magnitude;
-  }
-}
-
-float linearToDecibels(float linear) {
-  if (!linear)
-    return -1000;
-  return 20 * log10f(linear);
-}
-
-#define SMOOTHING_TIME_CONSTANT (0.8)
-#define MIN_DECIBELS (-100.0)
-#define MAX_DECIBELS (-30.0)
-
-#define AUDIO_BUFFER (1024)
-#define NUM_BANDS (AUDIO_BUFFER / 2)
-
-GLuint createTexture(GLint format, unsigned int w, unsigned int h, const GLvoid * data) {
+GLuint createTexture(GLint format, unsigned int w, unsigned int h) {
   GLuint texture = 0;
   glGenTextures(1, &texture);
   glBindTexture(GL_TEXTURE_2D, texture);
@@ -224,7 +175,14 @@ GLuint createTexture(GLint format, unsigned int w, unsigned int h, const GLvoid 
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-  glTexImage2D(GL_TEXTURE_2D, 0, format, w, h, 0, format, GL_UNSIGNED_BYTE, data);
+  unsigned char *q = (unsigned char *)malloc(w * h * 4);
+  if (!q)
+    return 0;
+
+  glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, q);
+
+  glTexImage2D(GL_TEXTURE_2D, 0, format, w, h, 0, format, GL_UNSIGNED_BYTE, q);
+  free(q);
   return texture;
 }
 
@@ -459,14 +417,6 @@ GLuint iChannel1 = 0;
 GLuint iChannel2 = 0;
 GLuint iChannel3 = 0;
 
-bool needsUpload = true;
-
-kiss_fft_cfg cfg;
-
-float *pcm = NULL;
-float *magnitude_buffer = NULL;
-GLubyte *audio_data = NULL;
-int samplesPerSec = 0;
 int width = 0;
 int height = 0;
 
@@ -621,11 +571,6 @@ extern "C" void Render()
     glClear(GL_DEPTH_BUFFER_BIT);
     glPushMatrix();
 #endif
-    glBindTexture(GL_TEXTURE_2D, iChannel0);
-    if (needsUpload) {
-      glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, NUM_BANDS, 2, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, audio_data);
-      needsUpload = false;
-    }
 
     float t = (float)PLATFORM::GetTimeMs() / 1000.0f;
     GLfloat tv[] = { t, t, t, t };
@@ -638,7 +583,7 @@ extern "C" void Render()
 #endif
     glUniform3f(iResolutionLoc, width, height, 0.0f);
     glUniform1f(iGlobalTimeLoc, t);
-    glUniform1f(iSampleRateLoc, samplesPerSec);
+    glUniform1f(iSampleRateLoc, 48000);
     glUniform1fv(iChannelTimeLoc, 4, tv);
 
     time_t now = time(NULL);
@@ -752,83 +697,18 @@ extern "C" void Render()
   }
 }
 
-extern "C" void Start(int iChannels, int iSamplesPerSec, int iBitsPerSample, const char* szSongName)
+extern "C" void Start()
 {
-  cout << "Start " << iChannels << " " << iSamplesPerSec << " " << iBitsPerSample << " " << szSongName << std::endl;
-  samplesPerSec = iSamplesPerSec;
-}
-
-void Mix(float *destination, const float *source, size_t frames, size_t channels)
-{
-  size_t length = frames * channels;
-  for (unsigned int i = 0; i < length; i += channels) {
-    float v = 0.0f;
-    for (size_t j = 0; j < channels; j++) {
-       v += source[i + j];
-    }
-
-    destination[(i / 2)] = v / (float)channels;
-  }
-}
-
-void WriteToBuffer(const float *input, size_t length, size_t channels)
-{
-  size_t frames = length / channels;
-
-  if (frames >= AUDIO_BUFFER) {
-    size_t offset = frames - AUDIO_BUFFER;
-
-    Mix(pcm, input + offset, AUDIO_BUFFER, channels);
-  } else {
-    size_t keep = AUDIO_BUFFER - frames;
-    memmove(pcm, pcm + frames, keep * sizeof(float));
-
-    Mix(pcm + keep, input, frames, channels);
-  }
-}
-
-extern "C" void AudioData(const float* pAudioData, int iAudioDataLength, float *pFreqData, int iFreqDataLength)
-{
-  //cout << "AudioData" << std::endl;
-  WriteToBuffer(pAudioData, iAudioDataLength, 2);
-
-  kiss_fft_cpx in[AUDIO_BUFFER], out[AUDIO_BUFFER];
-  for (unsigned int i = 0; i < AUDIO_BUFFER; i++) {
-    in[i].r = blackmanWindow(pcm[i], i, AUDIO_BUFFER);
-    in[i].i = 0;
-  }
-
-  kiss_fft(cfg, in, out);
-
-  out[0].i = 0;
-
-  smoothingOverTime(magnitude_buffer, magnitude_buffer, out, NUM_BANDS, SMOOTHING_TIME_CONSTANT, AUDIO_BUFFER);
-
-  const double rangeScaleFactor = MAX_DECIBELS == MIN_DECIBELS ? 1 : (1.0 / (MAX_DECIBELS - MIN_DECIBELS));
-  for (unsigned int i = 0; i < NUM_BANDS; i++) {
-    float linearValue = magnitude_buffer[i];
-    double dbMag = !linearValue ? MIN_DECIBELS : linearToDecibels(linearValue);
-    double scaledValue = UCHAR_MAX * (dbMag - MIN_DECIBELS) * rangeScaleFactor;
-
-    audio_data[i] = std::max(std::min((int)scaledValue, UCHAR_MAX), 0);
-  }
-
-  for (unsigned int i = 0; i < NUM_BANDS; i++) {
-    float v = (pcm[i] + 1.0f) * 128.0f;
-    audio_data[i + NUM_BANDS] = std::max(std::min((int)v, UCHAR_MAX), 0);
-  }
-
-  needsUpload = true;
+  cout << "Start " << std::endl;
+  loadPreset(g_currentPreset);
 }
 
 //-- GetInfo ------------------------------------------------------------------
 // Tell XBMC our requirements
 //-----------------------------------------------------------------------------
-extern "C" void GetInfo(VIS_INFO *pInfo)
+extern "C" void GetInfo(SCR_INFO *pInfo)
 {
   cout << "GetInfo" << std::endl;
-  pInfo->bWantsFreq = false;
-  pInfo->iSyncDelay = 0;
 }
 
 
@@ -839,59 +719,6 @@ extern "C" unsigned int GetSubModules(char ***names)
 {
   cout << "GetSubModules" << std::endl;
   return 0; // this vis supports 0 sub modules
-}
-
-//-- OnAction -----------------------------------------------------------------
-// Handle XBMC actions such as next preset, lock preset, album art changed etc
-//-----------------------------------------------------------------------------
-extern "C" bool OnAction(long flags, const void *param)
-{
-  cout << "OnAction" << std::endl;
-  switch (flags)
-  {
-    case VIS_ACTION_NEXT_PRESET:
-      LogAction("VIS_ACTION_NEXT_PRESET");
-      loadPreset((g_currentPreset + 1)  % g_presets.size());
-      return true;
-    case VIS_ACTION_PREV_PRESET:
-      LogAction("VIS_ACTION_PREV_PRESET");
-      loadPreset((g_currentPreset - 1)  % g_presets.size());
-      return true;
-    case VIS_ACTION_LOAD_PRESET:
-      LogAction("VIS_ACTION_LOAD_PRESET"); // TODO param is int *
-      if (param)
-      {
-        loadPreset(*(int *)param);
-        return true;
-      }
-
-      break;
-    case VIS_ACTION_RANDOM_PRESET:
-      LogAction("VIS_ACTION_RANDOM_PRESET");
-      loadPreset((int)((std::rand() / (float)RAND_MAX) * g_presets.size()));
-      return true;
-
-    case VIS_ACTION_LOCK_PRESET:
-      LogAction("VIS_ACTION_LOCK_PRESET");
-      break;
-    case VIS_ACTION_RATE_PRESET_PLUS:
-      LogAction("VIS_ACTION_RATE_PRESET_PLUS");
-      break;
-    case VIS_ACTION_RATE_PRESET_MINUS:
-      LogAction("VIS_ACTION_RATE_PRESET_MINUS");
-      break;
-    case VIS_ACTION_UPDATE_ALBUMART:
-      LogActionString("VIS_ACTION_UPDATE_ALBUMART", (const char *)param);
-      break;
-    case VIS_ACTION_UPDATE_TRACK:
-      LogTrack((VisTrack *)param);
-      break;
-
-    default:
-      break;
-  }
-
-  return false;
 }
 
 //-- GetPresets ---------------------------------------------------------------
@@ -935,19 +762,13 @@ extern "C" bool IsLocked()
 ADDON_STATUS ADDON_Create(void* hdl, void* props)
 {
   cout << "ADDON_Create" << std::endl;
-  VIS_PROPS *p = (VIS_PROPS *)props;
+  SCR_PROPS *p = (SCR_PROPS *)props;
 
   LogProps(p);
 
   g_pathPresets = p->presets;
   width = p->width;
   height = p->height;
-
-  audio_data = new GLubyte[AUDIO_BUFFER]();
-  magnitude_buffer = new float[NUM_BANDS]();
-  pcm = new float[AUDIO_BUFFER]();
-
-  cfg = kiss_fft_alloc(AUDIO_BUFFER, 0, NULL, NULL);
 
 #if !defined(HAS_GLES)
   if (GLEW_OK != glewInit()) {
@@ -984,9 +805,7 @@ ADDON_STATUS ADDON_Create(void* hdl, void* props)
       glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
 #endif
-
-    iChannel0 = createTexture(GL_LUMINANCE, NUM_BANDS, 2, audio_data);
-    loadPreset(g_currentPreset);
+    iChannel0 = createTexture(GL_LUMINANCE, width, height);
 
     initialized = true;
   }
@@ -1024,25 +843,6 @@ extern "C" void ADDON_Destroy()
     iChannel0 = 0;
   }
 
-  if (audio_data) {
-    delete [] audio_data;
-    audio_data = NULL;
-  }
-
-  if (magnitude_buffer) {
-    delete [] magnitude_buffer;
-    magnitude_buffer = NULL;
-  }
-
-  if (pcm) {
-    delete [] pcm;
-    pcm = NULL;
-  }
-
-  if (cfg) {
-    free(cfg);
-    cfg = 0;
-  }
 #if defined(HAS_GLES)
   glDeleteBuffers(1, &state->vertex_buffer);
   if (state->framebuffer_texture)
@@ -1129,14 +929,13 @@ extern "C" ADDON_STATUS ADDON_SetSetting(const char *strSetting, const void* val
     return ADDON_STATUS_OK;
   }
 
-  if (strcmp(strSetting, "lastpresetidx") == 0)
+  int c = *(int*)value;
+  if (strcmp(strSetting,"preset") == 0 && c >= 0 && c < g_presets.size())
   {
-    cout << "lastpresetidx = " << *((int *)value) << endl;
-    loadPreset(*(int *)value);
-    return ADDON_STATUS_OK;
+    cout << "Setting preset from " << g_currentPreset << " to " << c << endl;
+    g_currentPreset = c;
   }
-
-  return ADDON_STATUS_UNKNOWN;
+  return ADDON_STATUS_OK;
 }
 
 //-- Announce -----------------------------------------------------------------
