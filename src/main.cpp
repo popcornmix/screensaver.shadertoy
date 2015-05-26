@@ -164,28 +164,6 @@ void LogActionString(const char *message, const char *param) {
   cout << "Action " << message << " " << param << endl;
 }
 
-GLuint createTexture(GLint format, unsigned int w, unsigned int h) {
-  GLuint texture = 0;
-  glGenTextures(1, &texture);
-  glBindTexture(GL_TEXTURE_2D, texture);
-
-  glTexParameteri(GL_TEXTURE_2D,  GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-  glTexParameteri(GL_TEXTURE_2D,  GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-  unsigned char *q = (unsigned char *)malloc(w * h * 4);
-  if (!q)
-    return 0;
-
-  glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, q);
-
-  glTexImage2D(GL_TEXTURE_2D, 0, format, w, h, 0, format, GL_UNSIGNED_BYTE, q);
-  free(q);
-  return texture;
-}
-
 GLuint createTexture(const GLvoid *data, GLint format, unsigned int w, unsigned int h, GLint internalFormat, GLint scaling, GLint repeat) {
   GLuint texture = 0;
   glGenTextures(1, &texture);
@@ -407,18 +385,13 @@ GLint iMouseLoc             = 0;
 GLint iDateLoc              = 0;
 GLint iSampleRateLoc        = 0;
 GLint iChannelResolutionLoc = 0;
-GLint iChannel0Loc          = 0;
-GLint iChannel1Loc          = 0;
-GLint iChannel2Loc          = 0;
-GLint iChannel3Loc          = 0;
-
-GLuint iChannel0 = 0;
-GLuint iChannel1 = 0;
-GLuint iChannel2 = 0;
-GLuint iChannel3 = 0;
+GLint iChannelLoc[4];
+GLuint iChannel[4];
 
 int width = 0;
 int height = 0;
+
+static char *framebuffer;
 
 void unloadPreset() {
   if (shader) {
@@ -431,22 +404,12 @@ void unloadPreset() {
     state->render_program = 0;
   }
 #endif
-  if (iChannel1) {
-    cout << "Unloading iChannel1 " << iChannel1 << endl;
-    glDeleteTextures(1, &iChannel1);
-    iChannel1 = 0;
-  }
-
-  if (iChannel2) {
-    cout << "Unloading iChannel2 " << iChannel1 << endl;
-    glDeleteTextures(1, &iChannel2);
-    iChannel2 = 0;
-  }
-
-  if (iChannel3) {
-    cout << "Unloading iChannel3 " << iChannel1 << endl;
-    glDeleteTextures(1, &iChannel3);
-    iChannel3 = 0;
+  for (int i=0; i<4; i++) {
+    if (iChannel[i]) {
+      cout << "Unloading iChannel" << i << " " << iChannel[i] << endl;
+      glDeleteTextures(1, &iChannel[i]);
+      iChannel[i] = 0;
+    }
   }
 }
 
@@ -470,43 +433,15 @@ GLuint createShader(const string &file)
 GLint loadTexture(int number)
 {
   if (number >= 0 && number < g_numberTextures) {
-    GLint format = number > 10 ? GL_RGBA : GL_RGB;
+    GLint format = GL_RGBA;
     GLint scaling = GL_LINEAR;
-    GLint repeat = GL_CLAMP_TO_EDGE;
-
-    if (number == 16) {
-      format = GL_LUMINANCE;
-    }
-
-    if (number == 15 || number == 16) {
-      scaling = GL_NEAREST;
-    }
-
-    if (number == 16) {
-      repeat = GL_REPEAT;
-    }
-
+    GLint repeat = GL_REPEAT;
     return createTexture(g_fileTextures[number], format, scaling, repeat);
   }
-
+  else if (number == 99) { // framebuffer
+    return createTexture(framebuffer, GL_RGBA, width, height, GL_RGBA, GL_LINEAR, GL_REPEAT);
+  }
   return 0;
-/*
-            var format = gl.RGBA;
-            if( url.mSrc=="/presets/tex15.png" || url.mSrc=="/presets/tex17.png" )
-                format = gl.LUMINANCE;
-
-            if( url.mSrc=="/presets/tex14.png" )
-                createGLTextureNearest( gl, texture.image, texture.globject );
-            else if( url.mSrc=="/presets/tex15.png" )
-                createGLTextureNearestRepeat( gl, texture.image, texture.globject );
-            else
-               createGLTexture( gl, texture.image, format, texture.globject );
-
-            texture.loaded = true;
-            if( me.mTextureCallbackFun!=null )
-                me.mTextureCallbackFun( me.mTextureCallbackObj, slot, texture.image, true, true, 0, -1.0, me.mID );
-        }
-*/
 }
 
 void loadPreset(int number)
@@ -525,10 +460,10 @@ void loadPreset(int number)
     iDateLoc              = glGetUniformLocation(shader, "iDate");
     iSampleRateLoc        = glGetUniformLocation(shader, "iSampleRate");
     iChannelResolutionLoc = glGetUniformLocation(shader, "iChannelResolution");
-    iChannel0Loc          = glGetUniformLocation(shader, "iChannel0");
-    iChannel1Loc          = glGetUniformLocation(shader, "iChannel1");
-    iChannel2Loc          = glGetUniformLocation(shader, "iChannel2");
-    iChannel3Loc          = glGetUniformLocation(shader, "iChannel3");
+    iChannelLoc[0]        = glGetUniformLocation(shader, "iChannel0");
+    iChannelLoc[1]        = glGetUniformLocation(shader, "iChannel1");
+    iChannelLoc[2]        = glGetUniformLocation(shader, "iChannel2");
+    iChannelLoc[3]        = glGetUniformLocation(shader, "iChannel3");
 
 #if defined(HAS_GLES)
     state->uScale         = glGetUniformLocation(shader, "uScale");
@@ -538,11 +473,10 @@ void loadPreset(int number)
     state->attr_vertex_r  = glGetAttribLocation(state->render_program,  "vertex");
 #endif
 
-    if (g_presets[g_currentPreset].channel1 >= 0)
-      iChannel1 = loadTexture(g_presets[g_currentPreset].channel1);
-
-    if (g_presets[g_currentPreset].channel2 >= 0)
-      iChannel2 = loadTexture(g_presets[g_currentPreset].channel2);
+    for (int i=0; i<4; i++) {
+    if (g_presets[g_currentPreset].channel[i] >= 0)
+      iChannel[i] = loadTexture(g_presets[g_currentPreset].channel[i]);
+    }
   }
 }
 
@@ -596,33 +530,14 @@ extern "C" void Render()
 
     glUniform4f(iDateLoc, year, month, day, sec);
 
-    glActiveTexture(GL_TEXTURE0);
+    for (int i=0; i<4; i++) {
+      glActiveTexture(GL_TEXTURE0 + i);
 #if !defined(HAS_GLES)
-    glEnable(GL_TEXTURE_2D);
+      glEnable(GL_TEXTURE_2D);
 #endif
-    glUniform1i(iChannel0Loc, 0);
-    glBindTexture(GL_TEXTURE_2D, iChannel0);
-
-    glActiveTexture(GL_TEXTURE1);
-#if !defined(HAS_GLES)
-    glEnable(GL_TEXTURE_2D);
-#endif
-    glUniform1i(iChannel1Loc, 1);
-    glBindTexture(GL_TEXTURE_2D, iChannel1);
-
-    glActiveTexture(GL_TEXTURE2);
-#if !defined(HAS_GLES)
-    glEnable(GL_TEXTURE_2D);
-#endif
-    glUniform1i(iChannel2Loc, 2);
-    glBindTexture(GL_TEXTURE_2D, iChannel2);
-
-    glActiveTexture(GL_TEXTURE3);
-#if !defined(HAS_GLES)
-    glEnable(GL_TEXTURE_2D);
-#endif
-    glUniform1i(iChannel3Loc, 3);
-    glBindTexture(GL_TEXTURE_2D, iChannel3);
+      glUniform1i(iChannelLoc[i], i);
+      glBindTexture(GL_TEXTURE_2D, iChannel[i]);
+    }
 
 #if defined(HAS_GLES)
     // Draw the effect to a texture
@@ -805,7 +720,9 @@ ADDON_STATUS ADDON_Create(void* hdl, void* props)
       glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
 #endif
-    iChannel0 = createTexture(GL_LUMINANCE, width, height);
+    framebuffer = new char[width * height * 4];
+    if (framebuffer)
+      glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, framebuffer);
 
     initialized = true;
   }
@@ -838,9 +755,9 @@ extern "C" void ADDON_Destroy()
   if (lpresets)
     delete[] lpresets, lpresets = nullptr;
 
-  if (iChannel0) {
-    glDeleteTextures(1, &iChannel0);
-    iChannel0 = 0;
+  if (framebuffer) {
+    delete framebuffer;
+    framebuffer = NULL;
   }
 
 #if defined(HAS_GLES)
