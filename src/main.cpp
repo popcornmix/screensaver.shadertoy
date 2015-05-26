@@ -73,9 +73,9 @@ const char *g_fileTextures[] = {
   "tex10.png",
   "tex11.png",
   "tex12.png",
-  "tex14.png",
   "tex15.png",
-  "tex16.png"
+  "tex16.png",
+  "tex14.png",
 };
 
 #if defined(HAS_GLES)
