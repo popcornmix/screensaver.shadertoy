@@ -50,59 +50,12 @@ string g_pathPresets;
 struct Preset {
   std::string name;
   std::string file;
-  int channel1;
-  int channel2;
+  int channel[4];
 };
 
-#if defined(HAS_GLES)
 const std::vector<Preset> g_presets =
   {
-   {"Input Sound by iq",                        "input.frag.glsl",                  -1, -1},
-   {"LED spectrum by simesgreen",               "ledspectrum.frag.glsl",            -1, -1},
-   {"Audio Reaktive by choard1895",             "audioreaktive.frag.glsl",          -1, -1},
-   {"AudioVisual by Passion",                   "audiovisual.frag.glsl",            -1, -1},
-   {"Beating Circles by Phoenix72",             "beatingcircles.frag.glsl",         -1, -1},
-   {"BPM by iq",                                "bpm.frag.glsl",                    -1, -1},
-   {"The Disco Tunnel by poljere",              "discotunnel.frag.glsl",             2, 14},
-   {"Gameboy by iq",                            "gameboy.frag.glsl",                -1, -1},
-   {"Polar Beats by sauj123",                   "polarbeats.frag.glsl",             -1, -1},
-   {"Simplicity Galaxy by CBS",                 "simplicitygalaxy.frag.glsl",       -1, -1},
-   {"Sound Flower by iq",                       "soundflower.frag.glsl",            -1, -1},
-   {"Sound sinus wave by Eitraz",               "soundsinuswave.frag.glsl",         -1, -1},
-   {"symmetrical sound visualiser by thelinked","symmetricalsound.frag.glsl",       -1, -1},
-   {"Twisted Rings by poljere",                 "twistedrings.frag.glsl",           -1, -1},
-   {"Undulant Spectre by mafik",                "undulantspectre.frag.glsl",        -1, -1},
-   {"Waves Remix by ADOB",                      "wavesremix.frag.glsl",             -1, -1},
-   {"Circle Wave by TekF",                      "circlewave.frag.glsl",             -1, -1}};
-#else
-const std::vector<Preset> g_presets =
-  {{"Audio Reaktive by choard1895",             "audioreaktive.frag.glsl",          -1, -1},
-   {"AudioVisual by Passion",                   "audiovisual.frag.glsl",            -1, -1},
-   {"Beating Circles by Phoenix72",             "beatingcircles.frag.glsl",         -1, -1},
-   {"BPM by iq",                                "bpm.frag.glsl",                    -1, -1},
-   {"Circle Wave by TekF",                      "circlewave.frag.glsl",             -1, -1},
-   {"Circuits by Kali",                         "circuits.frag.glsl",                7, -1},
-   {"Colored Bars by novalis",                  "coloredbars.frag.glsl",            -1, -1},
-   {"Cubescape by iq",                          "cubescape.frag.glsl",               5, -1},
-   {"The Disco Tunnel by poljere",              "discotunnel.frag.glsl",             2, 14},
-   {"Fractal Land by Kali",                     "fractalland.frag.glsl",            13, -1},
-   {"Gameboy by iq",                            "gameboy.frag.glsl",                -1, -1},
-   {"I/O by movAX13h",                          "io.frag.glsl",                     -1, -1},
-   {"Kaleidoscope Visualizer by Qqwy",          "kaleidoscopevisualizer.frag.glsl", 15, -1},
-   {"Nyancat by mu6k",                          "nyancat.frag.glsl",                13, -1},
-   {"Polar Beats by sauj123",                   "polarbeats.frag.glsl",             -1, -1},
-   {"Revision 2015 Livecoding Round 1 by mu6k", "revision2015.frag.glsl",           -1, -1},
-   {"Ribbons by XT95",                          "ribbons.frag.glsl",                -1, -1},
-   {"Simplicity Galaxy by CBS",                 "simplicitygalaxy.frag.glsl",       -1, -1},
-   {"Sound Flower by iq",                       "soundflower.frag.glsl",            -1, -1},
-   {"Sound sinus wave by Eitraz",               "soundsinuswave.frag.glsl",         -1, -1},
-   {"symmetrical sound visualiser by thelinked","symmetricalsound.frag.glsl",       -1, -1},
-   {"Twisted Rings by poljere",                 "twistedrings.frag.glsl",           -1, -1},
-   {"Undulant Spectre by mafik",                "undulantspectre.frag.glsl",        -1, -1},
-   {"Demo - Volumetric Lines by iq",            "volumetriclines.frag.glsl",        -1, -1},
-   {"Waves Remix by ADOB",                      "wavesremix.frag.glsl",             -1, -1}};
-#endif
-
+  };
 int g_currentPreset = 0;
 char** lpresets = nullptr;
 
