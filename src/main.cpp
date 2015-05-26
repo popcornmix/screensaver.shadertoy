@@ -293,7 +293,7 @@ GLuint compileAndLinkProgram(const char *vertexShader, const char *fragmentShade
       int infologLength = 0;
       char *infoLog;
 
-      glGetShaderiv(program, GL_INFO_LOG_LENGTH, &infologLength);
+      glGetProgramiv(program, GL_INFO_LOG_LENGTH, &infologLength);
 
       if (infologLength > 0) {
         infoLog = new char[infologLength];
