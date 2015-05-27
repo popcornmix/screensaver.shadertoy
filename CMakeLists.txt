@@ -24,15 +24,14 @@ else()
   endif()
 endif()
 
-include_directories(${OpenGL_INCLUDE_DIR}
-                    ${GLEW_INCLUDE_DIR}
+include_directories(${INCLUDES}
                     ${KODI_INCLUDE_DIR}
                     ${CMAKE_INCLUDE_PATH})
 
 set(SHADERTOY_SOURCES src/lodepng.cpp
                       src/main.cpp)
 
-set(DEPLIBS ${OPENGL_LIBRARIES} ${GLEW_LIBRARIES})
+set(DEPLIBS ${DEPLIBS})
 
 if(APPLE)
   set(DEPLIBS ${DEPLIBS} "-framework CoreVideo")
