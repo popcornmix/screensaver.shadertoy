@@ -16,31 +16,95 @@ msgctxt "#30000"
 msgid "ShaderToy"
 msgstr ""
 
+msgctxt "#30100"
+msgid "Random"
+msgstr ""
+
 msgctxt "#30001"
 msgid "Ball"
 msgstr ""
 
 msgctxt "#30002"
-msgid "Plasma"
+msgid "Bleepy Blocks"
 msgstr ""
 
 msgctxt "#30003"
-msgid "Plasma2"
+msgid "Clouds"
 msgstr ""
 
 msgctxt "#30004"
-msgid "Stellar"
+msgid "Interstellar"
 msgstr ""
 
 msgctxt "#30005"
-msgid "Noise"
+msgid "Interweaving Sine Bands"
 msgstr ""
 
 msgctxt "#30006"
-msgid "Spiral"
+msgid "Juliasm"
 msgstr ""
 
 msgctxt "#30007"
+msgid "Julia Trap"
+msgstr ""
+
+msgctxt "#30008"
+msgid "Noise"
+msgstr ""
+
+msgctxt "#30009"
+msgid "Noise Animation Electric"
+msgstr ""
+
+msgctxt "#30010"
+msgid "Noise Animation Lava"
+msgstr ""
+
+msgctxt "#30011"
+msgid "Noise Animation Watery"
+msgstr ""
+
+msgctxt "#30012"
+msgid "Plasma Triangle"
+msgstr ""
+
+msgctxt "#30013"
+msgid "Plasma"
+msgstr ""
+
+msgctxt "#30014"
+msgid "Plasma2"
+msgstr ""
+
+msgctxt "#30015"
+msgid "Silexars Creation"
+msgstr ""
+
+msgctxt "#30016"
+msgid "Simple Fire"
+msgstr ""
+
+msgctxt "#30017"
+msgid "Sky at Night"
+msgstr ""
+
+msgctxt "#30018"
+msgid "Spiral"
+msgstr ""
+
+msgctxt "#30019"
 msgid "Warp"
+msgstr ""
+
+msgctxt "#30020"
+msgid "Water Caustic"
+msgstr ""
+
+msgctxt "#30021"
+msgid "Worley Noise Waters"
+msgstr ""
+
+msgctxt "#30022"
+msgid "Flaring"
 msgstr ""
 

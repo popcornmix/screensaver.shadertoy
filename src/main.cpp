@@ -55,6 +55,28 @@ struct Preset {
 
 const std::vector<Preset> g_presets =
   {
+   {"Ball",                            "ball.frag.glsl",                 99,-1,-1,-1},
+   {"Bleepy Blocks",                   "bleepyblocks.frag.glsl",         99,-1,-1,-1},
+   {"Fast Clouds",                     "fastclouds.frag.glsl",           12,-1,-1,-1},
+   {"Flaring",                         "flaring.frag.glsl",              12,-1,-1,-1},
+   {"Interstellar",                    "stellar.frag.glsl",              14,-1,-1,-1},
+   {"Interweaving Sine bands",         "sinebands.frag.glsl",            -1,-1,-1,-1},
+   {"Juliasm",                         "juliasm.frag.glsl",              -1,-1,-1,-1},
+   {"Julia Trap",                      "juliatrap.frag.glsl",            -1,-1,-1,-1},
+   {"Noise",                           "noise.frag.glsl",                -1,-1,-1,-1},
+   {"Noise Animation Electric",        "noiseanimelectric.frag.glsl",    12,-1,-1,-1},
+   {"Noise Animation Lava",            "noiseanimlava.frag.glsl",        12,-1,-1,-1},
+   {"Noise Animation Watery",          "noiseanimwatery.frag.glsl",      12,-1,-1,-1},
+   {"Plasma Triangle",                 "plasmatriangle.frag.glsl",       11,-1,-1,-1},
+   {"Plasma",                          "plasma.frag.glsl",               -1,-1,-1,-1},
+   {"Plasma2",                         "plasma2.frag.glsl",              -1,-1,-1,-1},
+   {"Silexars Creation",               "silexarst.frag.glsl",            -1,-1,-1,-1},
+   {"Simple Fire",                     "simplefire.frag.glsl",           -1,-1,-1,-1},
+   {"Sky at Night",                    "skyatnight.frag.glsl",           -1,-1,-1,-1},
+   {"Spiral",                          "spiral.frag.glsl",               -1,-1,-1,-1},
+   {"Warp",                            "warp.frag.glsl",                 99,-1,-1,-1},
+   {"Water Caustic",                   "watercaustic.frag.glsl",         -1,-1,-1,-1},
+   {"Worley Noise Waters",             "worleynoisewaters.frag.glsl",    -1,-1,-1,-1},
   };
 int g_currentPreset = 0;
 char** lpresets = nullptr;
@@ -129,7 +151,7 @@ GLuint createTexture(const GLvoid *data, GLint format, unsigned int w, unsigned 
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, repeat);
 
 #if defined(HAS_GLES)
-  glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, w, h, 0, internalFormat, GL_UNSIGNED_BYTE, data);
+  glTexImage2D(GL_TEXTURE_2D, 0, format, w, h, 0, format, GL_UNSIGNED_BYTE, data);
 #else
   glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, w, h, 0, format, GL_UNSIGNED_BYTE, data);
 #endif
@@ -800,9 +822,13 @@ extern "C" ADDON_STATUS ADDON_SetSetting(const char *strSetting, const void* val
   }
 
   int c = *(int*)value;
-  if (strcmp(strSetting,"preset") == 0 && c >= 0 && c < g_presets.size())
+  if (strcmp(strSetting,"preset") == 0 && c >= 0 && c < g_presets.size()+1)
   {
     cout << "Setting preset from " << g_currentPreset << " to " << c << endl;
+    if (c == 0)
+      c = (rand() >> 12) % g_presets.size();
+    else
+      c--;
     g_currentPreset = c;
   }
   return ADDON_STATUS_OK;
