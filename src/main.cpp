@@ -289,6 +289,8 @@ GLuint compileAndLinkProgram(const char *vertexShader, const char *fragmentShade
 #if defined(HAS_GLES)
 
 std::string vsSource = TO_STRING(
+         precision mediump float;
+         precision mediump int;
          attribute vec4 vertex;
          varying vec2 vTextureCoord;
          uniform vec2 uScale;
@@ -302,6 +304,8 @@ std::string vsSource = TO_STRING(
   );
 
 std::string render_vsSource = TO_STRING(
+         precision mediump float;
+         precision mediump int;
          attribute vec4 vertex;
          varying vec2 vTextureCoord;
          void main(void)
@@ -312,6 +316,8 @@ std::string render_vsSource = TO_STRING(
   );
 
 std::string render_fsSource = TO_STRING(
+         precision mediump float;
+         precision mediump int;
          varying vec2 vTextureCoord;
          uniform sampler2D uTexture;
          void main(void)
@@ -325,6 +331,8 @@ std::string vsSource = "void main() { gl_Position = ftransform(); }";
 
 std::string fsHeader =
 "#extension GL_OES_standard_derivatives : enable\n"
+"precision mediump float;\n"
+"precision mediump int;\n"
 "uniform vec3      iResolution;\n"
 "uniform float     iGlobalTime;\n"
 "uniform float     iChannelTime[4];\n"
