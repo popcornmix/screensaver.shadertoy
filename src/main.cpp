@@ -51,32 +51,33 @@ struct Preset {
   std::string name;
   std::string file;
   int channel[4];
+  float fps;
 };
 
 const std::vector<Preset> g_presets =
   {
-   {"Ball",                            "ball.frag.glsl",                 99,-1,-1,-1},
-   {"Bleepy Blocks",                   "bleepyblocks.frag.glsl",         99,-1,-1,-1},
-   {"Fast Clouds",                     "fastclouds.frag.glsl",           12,-1,-1,-1},
-   {"Flaring",                         "flaring.frag.glsl",              12,-1,-1,-1},
-   {"Interstellar",                    "stellar.frag.glsl",              14,-1,-1,-1},
-   {"Interweaving Sine bands",         "sinebands.frag.glsl",            -1,-1,-1,-1},
-   {"Juliasm",                         "juliasm.frag.glsl",              -1,-1,-1,-1},
-   {"Julia Trap",                      "juliatrap.frag.glsl",            -1,-1,-1,-1},
-   {"Noise",                           "noise.frag.glsl",                -1,-1,-1,-1},
-   {"Noise Animation Electric",        "noiseanimelectric.frag.glsl",    12,-1,-1,-1},
-   {"Noise Animation Lava",            "noiseanimlava.frag.glsl",        12,-1,-1,-1},
-   {"Noise Animation Watery",          "noiseanimwatery.frag.glsl",      12,-1,-1,-1},
-   {"Plasma Triangle",                 "plasmatriangle.frag.glsl",       11,-1,-1,-1},
-   {"Plasma",                          "plasma.frag.glsl",               -1,-1,-1,-1},
-   {"Plasma2",                         "plasma2.frag.glsl",              -1,-1,-1,-1},
-   {"Silexars Creation",               "silexarst.frag.glsl",            -1,-1,-1,-1},
-   {"Simple Fire",                     "simplefire.frag.glsl",           -1,-1,-1,-1},
-   {"Sky at Night",                    "skyatnight.frag.glsl",           -1,-1,-1,-1},
-   {"Spiral",                          "spiral.frag.glsl",               -1,-1,-1,-1},
-   {"Warp",                            "warp.frag.glsl",                 99,-1,-1,-1},
-   {"Water Caustic",                   "watercaustic.frag.glsl",         -1,-1,-1,-1},
-   {"Worley Noise Waters",             "worleynoisewaters.frag.glsl",    -1,-1,-1,-1},
+   {"Ball",                            "ball.frag.glsl",                 99,-1,-1,-1, 41},
+   {"Bleepy Blocks",                   "bleepyblocks.frag.glsl",         99,-1,-1,-1, 47},
+   {"Fast Clouds",                     "fastclouds.frag.glsl",           12,-1,-1,-1, 3},
+   {"Flaring",                         "flaring.frag.glsl",              12,-1,-1,-1, 16},
+   {"Interstellar",                    "stellar.frag.glsl",              14,-1,-1,-1, 5},
+   {"Interweaving Sine bands",         "sinebands.frag.glsl",            -1,-1,-1,-1, 31},
+   {"Juliasm",                         "juliasm.frag.glsl",              -1,-1,-1,-1, 13},
+   {"Julia Trap",                      "juliatrap.frag.glsl",            -1,-1,-1,-1, 18},
+   {"Noise",                           "noise.frag.glsl",                -1,-1,-1,-1, 34},
+   {"Noise Animation Electric",        "noiseanimelectric.frag.glsl",    12,-1,-1,-1, 14},
+   {"Noise Animation Lava",            "noiseanimlava.frag.glsl",        12,-1,-1,-1, 6},
+   {"Noise Animation Watery",          "noiseanimwatery.frag.glsl",      12,-1,-1,-1, 12},
+   {"Plasma Triangle",                 "plasmatriangle.frag.glsl",       11,-1,-1,-1, 14},
+   {"Plasma",                          "plasma.frag.glsl",               -1,-1,-1,-1, 20},
+   {"Plasma2",                         "plasma2.frag.glsl",              -1,-1,-1,-1, 14},
+   {"Silexars Creation",               "silexarst.frag.glsl",            -1,-1,-1,-1, 15},
+   {"Simple Fire",                     "simplefire.frag.glsl",           -1,-1,-1,-1, 7},
+   {"Sky at Night",                    "skyatnight.frag.glsl",           -1,-1,-1,-1, 4},
+   {"Spiral",                          "spiral.frag.glsl",               -1,-1,-1,-1, 18},
+   {"Warp",                            "warp.frag.glsl",                 99,-1,-1,-1, 28},
+   {"Water Caustic",                   "watercaustic.frag.glsl",         -1,-1,-1,-1, 5},
+   {"Worley Noise Waters",             "worleynoisewaters.frag.glsl",    -1,-1,-1,-1, 2},
   };
 int g_currentPreset = 0;
 char** lpresets = nullptr;
@@ -379,6 +380,14 @@ void unloadPreset() {
     shader = 0;
   }
 #if defined(HAS_GLES)
+  if (state->framebuffer_texture)
+  {
+    glDeleteTextures(1, &state->framebuffer_texture);
+  }
+  if (state->effect_fb)
+  {
+    glDeleteFramebuffers(1, &state->effect_fb);
+  }
   if (state->render_program) {
     glDeleteProgram(state->render_program);
     state->render_program = 0;
@@ -454,8 +463,35 @@ void loadPreset(int number)
 #endif
 
     for (int i=0; i<4; i++) {
-    if (g_presets[g_currentPreset].channel[i] >= 0)
-      iChannel[i] = loadTexture(g_presets[g_currentPreset].channel[i]);
+      if (g_presets[g_currentPreset].channel[i] >= 0)
+        iChannel[i] = loadTexture(g_presets[g_currentPreset].channel[i]);
+    }
+#if 0
+    state->fbwidth = width, state->fbwidth = height;
+#else
+    state->fbwidth = state->fbheight = 0;
+    float expected_fps = g_presets[g_currentPreset].fps * 1920 * 1080 / (width * height);
+    if (g_presets[g_currentPreset].fps && expected_fps < 30.0f) {
+      float A = 15e-3; // time taken for render from offscreen to onscreen 
+      float pixels = (1/30.0f - A) * expected_fps * width * height;
+      state->fbwidth = sqrtf(pixels * width / height);
+      state->fbheight = state->fbwidth * height / width;
+printf("expected fps=%f, pixels=%f %dx%d\n", expected_fps, pixels, state->fbwidth, state->fbheight);      
+    }
+#endif
+    if (state->fbwidth && state->fbheight)
+    {
+      // Prepare a texture to render to
+      glGenTextures(1, &state->framebuffer_texture);
+      glBindTexture(GL_TEXTURE_2D, state->framebuffer_texture);
+      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, state->fbwidth, state->fbheight, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
+      glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+      glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+      // Prepare a framebuffer for rendering
+      glGenFramebuffers(1, &state->effect_fb);
+      glBindFramebuffer(GL_FRAMEBUFFER, state->effect_fb);
+      glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, state->framebuffer_texture, 0);
+      glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
   }
 }
@@ -695,7 +731,6 @@ ADDON_STATUS ADDON_Create(void* hdl, void* props)
   if (!initialized)
   {
 #if defined(HAS_GLES)
-    state->fbwidth = 640; state->fbheight = 360;
     static const GLfloat vertex_data[] = {
         -1.0,1.0,1.0,1.0,
         1.0,1.0,1.0,1.0,
@@ -707,20 +742,6 @@ ADDON_STATUS ADDON_Create(void* hdl, void* props)
     glGenBuffers(1, &state->vertex_buffer);
     glBindBuffer(GL_ARRAY_BUFFER, state->vertex_buffer);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertex_data), vertex_data, GL_STATIC_DRAW);
-    if (state->fbwidth && state->fbheight)
-    {
-      // Prepare a texture to render to
-      glGenTextures(1, &state->framebuffer_texture);
-      glBindTexture(GL_TEXTURE_2D, state->framebuffer_texture);
-      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, state->fbwidth, state->fbheight, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
-      glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-      glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-      // Prepare a framebuffer for rendering
-      glGenFramebuffers(1, &state->effect_fb);
-      glBindFramebuffer(GL_FRAMEBUFFER, state->effect_fb);
-      glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, state->framebuffer_texture, 0);
-      glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    }
 #endif
     framebuffer = new char[width * height * 4];
     if (framebuffer)
@@ -764,14 +785,6 @@ extern "C" void ADDON_Destroy()
 
 #if defined(HAS_GLES)
   glDeleteBuffers(1, &state->vertex_buffer);
-  if (state->framebuffer_texture)
-  {
-    glDeleteTextures(1, &state->framebuffer_texture);
-  }
-  if (state->effect_fb)
-  {
-    glDeleteFramebuffers(1, &state->effect_fb);
-  }
 #endif
 
   initialized = false;
