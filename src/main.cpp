@@ -460,6 +460,12 @@ void loadPreset(int number)
   }
 }
 
+static uint64_t GetTimeStamp() {
+    struct timeval tv;
+    gettimeofday(&tv,NULL);
+    return tv.tv_sec*(uint64_t)1000000+tv.tv_usec;
+}
+
 //-- Render -------------------------------------------------------------------
 // Called once per frame. Do all rendering here.
 //-----------------------------------------------------------------------------
@@ -589,6 +595,22 @@ extern "C" void Render()
     glDisable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
 #endif
+
+{
+   static int frames = 0;
+   static uint64_t ts;
+   if (frames == 0) {
+     ts = GetTimeStamp();
+   }
+   frames++;
+   uint64_t ts2 = GetTimeStamp();
+   if (ts2 - ts > 1e6)
+   {
+      printf("%d fps\n", frames);
+      ts += 1e6;
+      frames = 0;
+   }
+}
   }
 }
 
