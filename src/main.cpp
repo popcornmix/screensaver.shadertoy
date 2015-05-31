@@ -856,7 +856,7 @@ extern "C" ADDON_STATUS ADDON_SetSetting(const char *strSetting, const void* val
     return ADDON_STATUS_OK;
   }
 
-  int c = *(int*)value;
+  int c = atoi((const char *)value);
   if (strcmp(strSetting,"preset") == 0 && c >= 0 && c < g_presets.size()+1)
   {
     cout << "Setting preset from " << g_currentPreset << " to " << c << endl;
