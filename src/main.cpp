@@ -143,6 +143,7 @@ void LogActionString(const char *message, const char *param) {
 
 GLuint createTexture(const GLvoid *data, GLint format, unsigned int w, unsigned int h, GLint internalFormat, GLint scaling, GLint repeat) {
   GLuint texture = 0;
+  glActiveTexture(GL_TEXTURE0);
   glGenTextures(1, &texture);
   glBindTexture(GL_TEXTURE_2D, texture);
 
@@ -483,6 +484,7 @@ printf("expected fps=%f, pixels=%f %dx%d\n", expected_fps, pixels, state->fbwidt
     if (state->fbwidth && state->fbheight)
     {
       // Prepare a texture to render to
+      glActiveTexture(GL_TEXTURE0);
       glGenTextures(1, &state->framebuffer_texture);
       glBindTexture(GL_TEXTURE_2D, state->framebuffer_texture);
       glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, state->fbwidth, state->fbheight, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
@@ -614,18 +616,10 @@ extern "C" void Render()
 #if !defined(HAS_GLES)
     glPopMatrix();
 #endif
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, 0);
-
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, 0);
-
-    glActiveTexture(GL_TEXTURE2);
-    glBindTexture(GL_TEXTURE_2D, 0);
-
-    glActiveTexture(GL_TEXTURE3);
-    glBindTexture(GL_TEXTURE_2D, 0);
-
+    for (int i=0; i<4; i++) {
+      glActiveTexture(GL_TEXTURE0 + i);
+      glBindTexture(GL_TEXTURE_2D, 0);
+    }
 #if !defined(HAS_GLES)
     glMatrixMode(GL_PROJECTION);
     glPopMatrix();
