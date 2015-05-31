@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="UTF-8"?>
-<addon id="screensaver.shadertoy" version="1.0.3" name="ShaderToy" provider-name="popcornmix">
+<addon id="screensaver.shadertoy" version="1.0.4" name="ShaderToy" provider-name="popcornmix">
   <extension point="xbmc.ui.screensaver" library_linux="screensaver.shadertoy.so"/>
   <extension point="xbmc.addon.metadata">
     <summary>ShaderToy screensaver</summary>
