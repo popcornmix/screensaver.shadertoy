@@ -58,6 +58,7 @@ const std::vector<Preset> g_presets =
   {
    {"Ball",                            "ball.frag.glsl",                 99,-1,-1,-1, 41},
    {"Bleepy Blocks",                   "bleepyblocks.frag.glsl",         99,-1,-1,-1, 47},
+   {"Cellular",                        "cellular.frag.glsl",             -1,-1,-1,-1, 13},
    {"Fast Clouds",                     "fastclouds.frag.glsl",           12,-1,-1,-1, 3},
    {"Flaring",                         "flaring.frag.glsl",              12,-1,-1,-1, 16},
    {"Interstellar",                    "stellar.frag.glsl",              14,-1,-1,-1, 5},

@@ -108,3 +108,7 @@ msgctxt "#30022"
 msgid "Flaring"
 msgstr ""
 
+msgctxt "#30023"
+msgid "Cellular"
+msgstr ""
+
