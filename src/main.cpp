@@ -81,6 +81,7 @@ const std::vector<Preset> g_presets =
    {"Worley Noise Waters",             "worleynoisewaters.frag.glsl",    -1,-1,-1,-1, 2},
   };
 int g_currentPreset = 0;
+bool g_limitGlobalTime = false;
 char** lpresets = nullptr;
 
 const char *g_fileTextures[] = {
@@ -531,7 +532,13 @@ extern "C" void Render()
     glPushMatrix();
 #endif
 
-    float t = (float)PLATFORM::GetTimeMs() / 1000.0f;
+    float t = PLATFORM::GetTimeMs();
+
+    // limit iGlobaltime to 10 secs max for GPUs with very low precision on floats
+    if (g_limitGlobalTime)
+      t = (float)((int)t % 10000);
+    t /= 1000.0f;
+
     GLfloat tv[] = { t, t, t, t };
 
     glUseProgram(shader);
@@ -856,16 +863,26 @@ extern "C" ADDON_STATUS ADDON_SetSetting(const char *strSetting, const void* val
     return ADDON_STATUS_OK;
   }
 
-  int c = atoi((const char *)value);
-  if (strcmp(strSetting,"preset") == 0 && c >= 0 && c < g_presets.size()+1)
+  if (strcmp(strSetting,"preset") == 0)
   {
-    cout << "Setting preset from " << g_currentPreset << " to " << c << endl;
-    if (c == 0)
-      c = (rand() >> 12) % g_presets.size();
-    else
-      c--;
-    g_currentPreset = c;
+    int c = atoi((const char *)value);
+    if (c >= 0 && c < g_presets.size()+1)
+    {
+      cout << "Setting preset from " << g_currentPreset << " to " << c << endl;
+      if (c == 0)
+        c = (rand() >> 12) % g_presets.size();
+      else
+        c--;
+      g_currentPreset = c;
+    }
   }
+  if (strcmp(strSetting,"limit_time_resolution") == 0)
+  {
+    cout << "Setting limit global time from " << (g_limitGlobalTime ? "true" : "false") << " to " << ((*(bool *)value) ? "true" : "false") << endl;
+    g_limitGlobalTime = *(bool*)value;
+  }
+
+
   return ADDON_STATUS_OK;
 }
 
