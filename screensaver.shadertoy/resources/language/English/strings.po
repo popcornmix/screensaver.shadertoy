@@ -112,3 +112,6 @@ msgctxt "#30023"
 msgid "Cellular"
 msgstr ""
 
+msgctxt "#32000"
+msgid "Workaround low precision GPU (f.e. Mali). Enable this if presets are slow or stuck."
+msgstr ""

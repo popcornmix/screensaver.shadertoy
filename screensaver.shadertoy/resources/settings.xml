@@ -1,3 +1,4 @@
 <settings>
   <setting id="preset" label="30000" type="select" lvalues="30100|30001|30002|30023|30003|30022|30004|30005|30006|30007|30008|30009|30010|30011|30012|30013|30014|30015|30016|30017|30018|30019|30020|30021" default="0"/>
+  <setting id="limit_time_resolution" label="32000" type="bool" default="false"/>
 </settings>
