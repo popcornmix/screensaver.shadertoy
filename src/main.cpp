@@ -406,7 +406,7 @@ void unloadPreset() {
   }
 }
 
-GLuint createShader(const string &file)
+std::string createShader(const std::string &file)
 {
   std::ostringstream ss;
   ss << g_pathPresets << "/resources/" << file;
@@ -420,7 +420,7 @@ GLuint createShader(const string &file)
   //std::string str = "void mainImage( out vec4 fragColor, in vec2 fragCoord ) { fragColor = texture2D(iChannel1, fragCoord.xy / iResolution.xy); }";
 
   std::string fsSource = fsHeader + "\n" + str + "\n" + fsFooter;
-  return compileAndLinkProgram(vsSource.c_str(), fsSource.c_str());
+  return fsSource;
 }
 
 GLint loadTexture(int number)
@@ -437,14 +437,10 @@ GLint loadTexture(int number)
   return 0;
 }
 
-void loadPreset(int number)
+void loadPreset(std::string vsSource, std::string fsSource)
 {
-  if (number >= 0 && number < g_presets.size())
-  {
-    g_currentPreset = number;
-
     unloadPreset();
-    shadertoy_shader = createShader(g_presets[g_currentPreset].file);
+    shadertoy_shader = compileAndLinkProgram(vsSource.c_str(), fsSource.c_str());
 
     iResolutionLoc        = glGetUniformLocation(shadertoy_shader, "iResolution");
     iGlobalTimeLoc        = glGetUniformLocation(shadertoy_shader, "iGlobalTime");
@@ -499,7 +495,6 @@ printf("expected fps=%f, pixels=%f %dx%d\n", expected_fps, pixels, state->fbwidt
       glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
     initial_time = PLATFORM::GetTimeMs();
-  }
 }
 
 static uint64_t GetTimeStamp() {
@@ -642,7 +637,8 @@ extern "C" void Render()
 extern "C" void Start()
 {
   cout << "Start " << std::endl;
-  loadPreset(g_currentPreset);
+  std::string fsSource = createShader(g_presets[g_currentPreset].file);
+  loadPreset(vsSource, fsSource);
 }
 
 //-- GetInfo ------------------------------------------------------------------
