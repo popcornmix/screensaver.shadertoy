@@ -359,7 +359,7 @@ std::string fsFooter =
 
 bool initialized = false;
 
-GLuint shader = 0;
+GLuint shadertoy_shader = 0;
 
 GLint iResolutionLoc        = 0;
 GLint iGlobalTimeLoc        = 0;
@@ -379,9 +379,9 @@ int64_t initial_time;
 static char *framebuffer;
 
 void unloadPreset() {
-  if (shader) {
-    glDeleteProgram(shader);
-    shader = 0;
+  if (shadertoy_shader) {
+    glDeleteProgram(shadertoy_shader);
+    shadertoy_shader = 0;
   }
 #if defined(HAS_GLES)
   if (state->framebuffer_texture)
@@ -444,23 +444,23 @@ void loadPreset(int number)
     g_currentPreset = number;
 
     unloadPreset();
-    shader = createShader(g_presets[g_currentPreset].file);
+    shadertoy_shader = createShader(g_presets[g_currentPreset].file);
 
-    iResolutionLoc        = glGetUniformLocation(shader, "iResolution");
-    iGlobalTimeLoc        = glGetUniformLocation(shader, "iGlobalTime");
-    iChannelTimeLoc       = glGetUniformLocation(shader, "iChannelTime");
-    iMouseLoc             = glGetUniformLocation(shader, "iMouse");
-    iDateLoc              = glGetUniformLocation(shader, "iDate");
-    iSampleRateLoc        = glGetUniformLocation(shader, "iSampleRate");
-    iChannelResolutionLoc = glGetUniformLocation(shader, "iChannelResolution");
-    iChannelLoc[0]        = glGetUniformLocation(shader, "iChannel0");
-    iChannelLoc[1]        = glGetUniformLocation(shader, "iChannel1");
-    iChannelLoc[2]        = glGetUniformLocation(shader, "iChannel2");
-    iChannelLoc[3]        = glGetUniformLocation(shader, "iChannel3");
+    iResolutionLoc        = glGetUniformLocation(shadertoy_shader, "iResolution");
+    iGlobalTimeLoc        = glGetUniformLocation(shadertoy_shader, "iGlobalTime");
+    iChannelTimeLoc       = glGetUniformLocation(shadertoy_shader, "iChannelTime");
+    iMouseLoc             = glGetUniformLocation(shadertoy_shader, "iMouse");
+    iDateLoc              = glGetUniformLocation(shadertoy_shader, "iDate");
+    iSampleRateLoc        = glGetUniformLocation(shadertoy_shader, "iSampleRate");
+    iChannelResolutionLoc = glGetUniformLocation(shadertoy_shader, "iChannelResolution");
+    iChannelLoc[0]        = glGetUniformLocation(shadertoy_shader, "iChannel0");
+    iChannelLoc[1]        = glGetUniformLocation(shadertoy_shader, "iChannel1");
+    iChannelLoc[2]        = glGetUniformLocation(shadertoy_shader, "iChannel2");
+    iChannelLoc[3]        = glGetUniformLocation(shadertoy_shader, "iChannel3");
 
 #if defined(HAS_GLES)
-    state->uScale         = glGetUniformLocation(shader, "uScale");
-    state->attr_vertex_e  = glGetAttribLocation(shader,  "vertex");
+    state->uScale         = glGetUniformLocation(shadertoy_shader, "uScale");
+    state->attr_vertex_e  = glGetAttribLocation(shadertoy_shader,  "vertex");
     state->render_program = compileAndLinkProgram(render_vsSource.c_str(), render_fsSource.c_str());
     state->uTexture       = glGetUniformLocation(state->render_program, "uTexture");
     state->attr_vertex_r  = glGetAttribLocation(state->render_program,  "vertex");
@@ -537,7 +537,7 @@ extern "C" void Render()
     float t = (PLATFORM::GetTimeMs() - initial_time) / 1000.0f;
     GLfloat tv[] = { t, t, t, t };
 
-    glUseProgram(shader);
+    glUseProgram(shadertoy_shader);
 #if defined(HAS_GLES)
     if (state->fbwidth && state->fbheight)
       glUniform3f(iResolutionLoc, state->fbwidth, state->fbheight, 0.0f);
