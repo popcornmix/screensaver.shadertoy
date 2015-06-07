@@ -461,9 +461,6 @@ void loadPreset(int number)
 #if defined(HAS_GLES)
     state->uScale         = glGetUniformLocation(shadertoy_shader, "uScale");
     state->attr_vertex_e  = glGetAttribLocation(shadertoy_shader,  "vertex");
-    state->render_program = compileAndLinkProgram(render_vsSource.c_str(), render_fsSource.c_str());
-    state->uTexture       = glGetUniformLocation(state->render_program, "uTexture");
-    state->attr_vertex_r  = glGetAttribLocation(state->render_program,  "vertex");
 #endif
 
     for (int i=0; i<4; i++) {
@@ -485,6 +482,9 @@ printf("expected fps=%f, pixels=%f %dx%d\n", expected_fps, pixels, state->fbwidt
 #endif
     if (state->fbwidth && state->fbheight)
     {
+      state->render_program = compileAndLinkProgram(render_vsSource.c_str(), render_fsSource.c_str());
+      state->uTexture       = glGetUniformLocation(state->render_program, "uTexture");
+      state->attr_vertex_r  = glGetAttribLocation(state->render_program,  "vertex");
       // Prepare a texture to render to
       glActiveTexture(GL_TEXTURE0);
       glGenTextures(1, &state->framebuffer_texture);
@@ -508,46 +508,44 @@ static uint64_t GetTimeStamp() {
     return tv.tv_sec*(uint64_t)1000000+tv.tv_usec;
 }
 
-//-- Render -------------------------------------------------------------------
-// Called once per frame. Do all rendering here.
-//-----------------------------------------------------------------------------
-extern "C" void Render()
+static void RenderTo(GLuint shader)
 {
-  glGetError();
-  //cout << "Render" << std::endl;
-  if (initialized) {
-#if defined(HAS_GLES)
-#else
-    glDisable(GL_BLEND);
-    glMatrixMode(GL_PROJECTION);
-    glPushMatrix();
-    glLoadIdentity();
-    glOrtho(-1, 1, -1, 1, -1, 1);
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-    glLoadIdentity();
-    glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LESS);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+  glUseProgram(shader);
 
-    glClear(GL_DEPTH_BUFFER_BIT);
-    glPushMatrix();
+#if !defined(HAS_GLES)
+  glDisable(GL_BLEND);
+  glMatrixMode(GL_PROJECTION);
+  glPushMatrix();
+  glLoadIdentity();
+  glOrtho(-1, 1, -1, 1, -1, 1);
+  glMatrixMode(GL_MODELVIEW);
+  glPushMatrix();
+  glLoadIdentity();
+  glEnable(GL_DEPTH_TEST);
+  glDepthFunc(GL_LESS);
+  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+  glClear(GL_DEPTH_BUFFER_BIT);
+  glPushMatrix();
+#endif
+
+  if (shader == shadertoy_shader) {
+    GLuint w = width, h = height;
+#if defined(HAS_GLES)
+    if (state->fbwidth && state->fbheight)
+      w = state->fbwidth, h = state->fbheight;
 #endif
 
     float t = (PLATFORM::GetTimeMs() - initial_time) / 1000.0f;
     GLfloat tv[] = { t, t, t, t };
 
-    glUseProgram(shadertoy_shader);
-#if defined(HAS_GLES)
-    if (state->fbwidth && state->fbheight)
-      glUniform3f(iResolutionLoc, state->fbwidth, state->fbheight, 0.0f);
-    else
-#endif
-    glUniform3f(iResolutionLoc, width, height, 0.0f);
+    glUniform3f(iResolutionLoc, w, h, 0.0f);
     glUniform1f(iGlobalTimeLoc, t);
     glUniform1f(iSampleRateLoc, 48000);
     glUniform1fv(iChannelTimeLoc, 4, tv);
-
+#if defined(HAS_GLES)
+    glUniform2f(state->uScale, (GLfloat)width/state->fbwidth, (GLfloat)height/state->fbheight);
+#endif
     time_t now = time(NULL);
     tm *ltm = localtime(&now);
 
@@ -566,85 +564,78 @@ extern "C" void Render()
       glUniform1i(iChannelLoc[i], i);
       glBindTexture(GL_TEXTURE_2D, iChannel[i]);
     }
+  } else {
+#if defined(HAS_GLES)
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, state->framebuffer_texture);
+    glUniform1i(state->uTexture, 0); // first currently bound texture "GL_TEXTURE0"
+#endif
+  }
 
 #if defined(HAS_GLES)
-    // Draw the effect to a texture
-    if (state->effect_fb)
-      glBindFramebuffer(GL_FRAMEBUFFER, state->effect_fb);
-    else
-      glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  // Draw the effect to a texture or direct to framebuffer
+  if (shader == shadertoy_shader)
+    glBindFramebuffer(GL_FRAMEBUFFER, state->effect_fb);
+  else
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-    if (state->effect_fb)
-      glUniform2f(state->uScale, (GLfloat)width/state->fbwidth, (GLfloat)height/state->fbheight);
-    else
-      glUniform2f(state->uScale, 1.0, 1.0);
-
-    glBindBuffer(GL_ARRAY_BUFFER, state->vertex_buffer);
-    glVertexAttribPointer(state->attr_vertex_e, 4, GL_FLOAT, 0, 16, 0);
-    glEnableVertexAttribArray(state->attr_vertex_e);
-    glDrawArrays( GL_TRIANGLE_FAN, 0, 4 );
-    glDisableVertexAttribArray(state->attr_vertex_e);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-    if (state->framebuffer_texture)
-    {
-        // Now render to the main frame buffer
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-        glBindBuffer(GL_ARRAY_BUFFER, state->vertex_buffer);
-        glUseProgram ( state->render_program );
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, state->framebuffer_texture);
-        glUniform1i(state->uTexture, 0); // first currently bound texture "GL_TEXTURE0"
-
-        glVertexAttribPointer(state->attr_vertex_r, 4, GL_FLOAT, 0, 16, 0);
-        glEnableVertexAttribArray(state->attr_vertex_r);
-
-        glDrawArrays( GL_TRIANGLE_FAN, 0, 4 );
-
-	glDisableVertexAttribArray(state->attr_vertex_r);
-        glBindTexture(GL_TEXTURE_2D, 0);
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-    }
+  GLuint attr_vertex = shader == shadertoy_shader ? state->attr_vertex_e : state->attr_vertex_r;
+  glBindBuffer(GL_ARRAY_BUFFER, state->vertex_buffer);
+  glVertexAttribPointer(attr_vertex, 4, GL_FLOAT, 0, 16, 0);
+  glEnableVertexAttribArray(attr_vertex);
+  glDrawArrays( GL_TRIANGLE_FAN, 0, 4 );
+  glDisableVertexAttribArray(attr_vertex);
+  glBindBuffer(GL_ARRAY_BUFFER, 0);
 #else
-    glBegin(GL_QUADS);
-      glVertex3f(-1.0f, 1.0f, 0.0f);
-      glVertex3f( 1.0f, 1.0f, 0.0f);
-      glVertex3f( 1.0f,-1.0f, 0.0f);
-      glVertex3f(-1.0f,-1.0f, 0.0f);
-    glEnd();
-#endif
-    glUseProgram(0);
-
-#if !defined(HAS_GLES)
-    glPopMatrix();
-#endif
-    for (int i=0; i<4; i++) {
-      glActiveTexture(GL_TEXTURE0 + i);
-      glBindTexture(GL_TEXTURE_2D, 0);
-    }
-#if !defined(HAS_GLES)
-    glMatrixMode(GL_PROJECTION);
-    glPopMatrix();
-    glDisable(GL_DEPTH_TEST);
-    glEnable(GL_BLEND);
+  glBegin(GL_QUADS);
+    glVertex3f(-1.0f, 1.0f, 0.0f);
+    glVertex3f( 1.0f, 1.0f, 0.0f);
+    glVertex3f( 1.0f,-1.0f, 0.0f);
+    glVertex3f(-1.0f,-1.0f, 0.0f);
+  glEnd();
 #endif
 
-{
-   static int frames = 0;
-   static uint64_t ts;
-   if (frames == 0) {
-     ts = GetTimeStamp();
-   }
-   frames++;
-   uint64_t ts2 = GetTimeStamp();
-   if (ts2 - ts > 1e6)
-   {
-      printf("%d fps\n", frames);
-      ts += 1e6;
-      frames = 0;
-   }
+  for (int i=0; i<4; i++) {
+    glActiveTexture(GL_TEXTURE0 + i);
+    glBindTexture(GL_TEXTURE_2D, 0);
+  }
+#if !defined(HAS_GLES)
+  glPopMatrix();
+  glMatrixMode(GL_PROJECTION);
+  glPopMatrix();
+  glDisable(GL_DEPTH_TEST);
+  glEnable(GL_BLEND);
+#endif
+  glUseProgram(0);
 }
+
+
+//-- Render -------------------------------------------------------------------
+// Called once per frame. Do all rendering here.
+//-----------------------------------------------------------------------------
+extern "C" void Render()
+{
+  glGetError();
+  //cout << "Render" << std::endl;
+  if (initialized) {
+    RenderTo(shadertoy_shader);
+#if defined(HAS_GLES)
+    if (state->render_program)
+      RenderTo(state->render_program);
+#endif
+    static int frames = 0;
+    static uint64_t ts;
+    if (frames == 0) {
+      ts = GetTimeStamp();
+    }
+    frames++;
+    uint64_t ts2 = GetTimeStamp();
+    if (ts2 - ts > 1e6)
+    {
+     printf("%d fps\n", frames);
+     ts += 1e6;
+     frames = 0;
+    }
   }
 }
 
