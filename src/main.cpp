@@ -374,6 +374,8 @@ GLuint iChannel[4];
 int width = 0;
 int height = 0;
 
+int64_t initial_time;
+
 static char *framebuffer;
 
 void unloadPreset() {
@@ -496,6 +498,7 @@ printf("expected fps=%f, pixels=%f %dx%d\n", expected_fps, pixels, state->fbwidt
       glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, state->framebuffer_texture, 0);
       glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
+    initial_time = PLATFORM::GetTimeMs();
   }
 }
 
@@ -531,7 +534,7 @@ extern "C" void Render()
     glPushMatrix();
 #endif
 
-    float t = (float)PLATFORM::GetTimeMs() / 1000.0f;
+    float t = (PLATFORM::GetTimeMs() - initial_time) / 1000.0f;
     GLfloat tv[] = { t, t, t, t };
 
     glUseProgram(shader);
