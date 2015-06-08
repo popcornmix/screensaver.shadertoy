@@ -226,6 +226,7 @@ GLuint compileShader(GLenum shaderType, const char *shader) {
 }
 
 GLuint compileAndLinkProgram(const char *vertexShader, const char *fragmentShader) {
+  cout << "CompileAndLink " << endl;
   GLuint program = glCreateProgram();
   if (program == 0) {
     cerr << "Failed to create program" << endl;
@@ -378,6 +379,17 @@ int bits_precision = 0;
 
 static unsigned char *framebuffer;
 
+
+void unloadTextures() {
+  for (int i=0; i<4; i++) {
+    if (iChannel[i]) {
+      cout << "Unloading iChannel" << i << " " << iChannel[i] << endl;
+      glDeleteTextures(1, &iChannel[i]);
+      iChannel[i] = 0;
+    }
+  }
+}
+
 void unloadPreset() {
   if (shadertoy_shader) {
     glDeleteProgram(shadertoy_shader);
@@ -399,13 +411,6 @@ void unloadPreset() {
     state->render_program = 0;
   }
 #endif
-  for (int i=0; i<4; i++) {
-    if (iChannel[i]) {
-      cout << "Unloading iChannel" << i << " " << iChannel[i] << endl;
-      glDeleteTextures(1, &iChannel[i]);
-      iChannel[i] = 0;
-    }
-  }
 }
 
 std::string createShader(const std::string &file)
@@ -439,51 +444,44 @@ GLint loadTexture(int number)
   return 0;
 }
 
-void loadPreset(std::string vsSource, std::string fsSource)
+void loadPreset(int preset, std::string vsSource, std::string fsSource)
 {
-    unloadPreset();
-    shadertoy_shader = compileAndLinkProgram(vsSource.c_str(), fsSource.c_str());
+  unloadPreset();
+  shadertoy_shader = compileAndLinkProgram(vsSource.c_str(), fsSource.c_str());
 
-    iResolutionLoc        = glGetUniformLocation(shadertoy_shader, "iResolution");
-    iGlobalTimeLoc        = glGetUniformLocation(shadertoy_shader, "iGlobalTime");
-    iChannelTimeLoc       = glGetUniformLocation(shadertoy_shader, "iChannelTime");
-    iMouseLoc             = glGetUniformLocation(shadertoy_shader, "iMouse");
-    iDateLoc              = glGetUniformLocation(shadertoy_shader, "iDate");
-    iSampleRateLoc        = glGetUniformLocation(shadertoy_shader, "iSampleRate");
-    iChannelResolutionLoc = glGetUniformLocation(shadertoy_shader, "iChannelResolution");
-    iChannelLoc[0]        = glGetUniformLocation(shadertoy_shader, "iChannel0");
-    iChannelLoc[1]        = glGetUniformLocation(shadertoy_shader, "iChannel1");
-    iChannelLoc[2]        = glGetUniformLocation(shadertoy_shader, "iChannel2");
-    iChannelLoc[3]        = glGetUniformLocation(shadertoy_shader, "iChannel3");
+  iResolutionLoc        = glGetUniformLocation(shadertoy_shader, "iResolution");
+  iGlobalTimeLoc        = glGetUniformLocation(shadertoy_shader, "iGlobalTime");
+  iChannelTimeLoc       = glGetUniformLocation(shadertoy_shader, "iChannelTime");
+  iMouseLoc             = glGetUniformLocation(shadertoy_shader, "iMouse");
+  iDateLoc              = glGetUniformLocation(shadertoy_shader, "iDate");
+  iSampleRateLoc        = glGetUniformLocation(shadertoy_shader, "iSampleRate");
+  iChannelResolutionLoc = glGetUniformLocation(shadertoy_shader, "iChannelResolution");
+  iChannelLoc[0]        = glGetUniformLocation(shadertoy_shader, "iChannel0");
+  iChannelLoc[1]        = glGetUniformLocation(shadertoy_shader, "iChannel1");
+  iChannelLoc[2]        = glGetUniformLocation(shadertoy_shader, "iChannel2");
+  iChannelLoc[3]        = glGetUniformLocation(shadertoy_shader, "iChannel3");
 
 #if defined(HAS_GLES)
-    state->uScale         = glGetUniformLocation(shadertoy_shader, "uScale");
-    state->attr_vertex_e  = glGetAttribLocation(shadertoy_shader,  "vertex");
+  state->uScale         = glGetUniformLocation(shadertoy_shader, "uScale");
+  state->attr_vertex_e  = glGetAttribLocation(shadertoy_shader,  "vertex");
 #endif
 
-    for (int i=0; i<4; i++) {
-      if (g_presets[g_currentPreset].channel[i] >= 0)
-        iChannel[i] = loadTexture(g_presets[g_currentPreset].channel[i]);
-    }
-    if (state->fbwidth && state->fbheight)
-    {
-      state->render_program = compileAndLinkProgram(render_vsSource.c_str(), render_fsSource.c_str());
-      state->uTexture       = glGetUniformLocation(state->render_program, "uTexture");
-      state->attr_vertex_r  = glGetAttribLocation(state->render_program,  "vertex");
-      // Prepare a texture to render to
-      glActiveTexture(GL_TEXTURE0);
-      glGenTextures(1, &state->framebuffer_texture);
-      glBindTexture(GL_TEXTURE_2D, state->framebuffer_texture);
-      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, state->fbwidth, state->fbheight, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
-      glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-      glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-      // Prepare a framebuffer for rendering
-      glGenFramebuffers(1, &state->effect_fb);
-      glBindFramebuffer(GL_FRAMEBUFFER, state->effect_fb);
-      glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, state->framebuffer_texture, 0);
-      glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    }
-    initial_time = PLATFORM::GetTimeMs();
+  state->render_program = compileAndLinkProgram(render_vsSource.c_str(), render_fsSource.c_str());
+  state->uTexture       = glGetUniformLocation(state->render_program, "uTexture");
+  state->attr_vertex_r  = glGetAttribLocation(state->render_program,  "vertex");
+  // Prepare a texture to render to
+  glActiveTexture(GL_TEXTURE0);
+  glGenTextures(1, &state->framebuffer_texture);
+  glBindTexture(GL_TEXTURE_2D, state->framebuffer_texture);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, state->fbwidth, state->fbheight, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  // Prepare a framebuffer for rendering
+  glGenFramebuffers(1, &state->effect_fb);
+  glBindFramebuffer(GL_FRAMEBUFFER, state->effect_fb);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, state->framebuffer_texture, 0);
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  initial_time = PLATFORM::GetTimeMs();
 }
 
 static uint64_t GetTimeStamp() {
@@ -602,10 +600,15 @@ extern "C" void Render()
   glGetError();
   //cout << "Render" << std::endl;
   if (initialized) {
-    RenderTo(shadertoy_shader, state->effect_fb);
 #if defined(HAS_GLES)
-    if (state->render_program)
+    if (state->fbwidth && state->fbheight) {
+      RenderTo(shadertoy_shader, state->effect_fb);
       RenderTo(state->render_program, 0);
+    } else {
+      RenderTo(shadertoy_shader, 0);
+    }
+#else
+    RenderTo(shadertoy_shader, 0);
 #endif
     static int frames = 0;
     static uint64_t ts;
@@ -639,7 +642,7 @@ static int determine_bits_precision()
   std::string fsPrecisionSource = fsHeader + "\n" + vsPrecisionSource + "\n" + fsFooter;
 
   state->fbwidth = 32, state->fbheight = 26*10;
-  loadPreset(vsSource, fsPrecisionSource);
+  loadPreset(0, vsSource, fsPrecisionSource);
   RenderTo(shadertoy_shader, state->effect_fb);
   glFinish();
 
@@ -667,20 +670,21 @@ static int determine_bits_precision()
   return bits;
 }
 
-static double measure_performance(int size)
+static double measure_performance(int preset, int size)
 {
   int iterations = -1;
-  std::string fsSource = createShader(g_presets[g_currentPreset].file);
+  std::string fsSource = createShader(g_presets[preset].file);
 
   state->fbwidth = state->fbheight = size;
-  loadPreset(vsSource, fsSource);
+  loadPreset(preset, vsSource, fsSource);
 
   int64_t end, start;
   do {
-    RenderTo(shadertoy_shader, state->effect_fb);
 #if defined(HAS_GLES)
-    if (state->render_program)
-      RenderTo(state->render_program, state->effect_fb);
+    RenderTo(shadertoy_shader, state->effect_fb);
+    RenderTo(state->render_program, state->effect_fb);
+#else
+    RenderTo(shadertoy_shader, 0);
 #endif
     glFinish();
     if (++iterations == 0)
@@ -693,19 +697,23 @@ static double measure_performance(int size)
   return t;
 }
 
-extern "C" void Start()
+static void launch(int preset)
 {
-  cout << "Start " << std::endl;
-
   bits_precision = determine_bits_precision();
   // mali-400 has only 10 bits which means milliseond timer wraps after ~1 second.
   // we'll fudge that up a bit as having a larger range is more important than ms accuracy
   bits_precision = max(bits_precision, 13);
   printf("bits=%d\n", bits_precision);
+  
+  unloadTextures();
+  for (int i=0; i<4; i++) {
+    if (g_presets[preset].channel[i] >= 0)
+      iChannel[i] = loadTexture(g_presets[preset].channel[i]);
+  }
 
   const int size1 = 256, size2=512;
-  double t1 = measure_performance(size1);
-  double t2 = measure_performance(size2);
+  double t1 = measure_performance(preset, size1);
+  double t2 = measure_performance(preset, size2);
  
   double expected_fps = 40.0;
   // time per pixel for rendering fragment shader
@@ -721,10 +729,16 @@ extern "C" void Start()
     state->fbwidth = 320;
   state->fbheight = state->fbwidth * height / width;
 
-  printf("expected fps=%f, pixels=%f %dx%d (A:%f B:%f t1:%d t2:%d)\n", expected_fps, pixels, state->fbwidth, state->fbheight, A, B, t1, t2);      
+  printf("expected fps=%f, pixels=%f %dx%d (A:%f B:%f t1:%.1f t2:%.1f)\n", expected_fps, pixels, state->fbwidth, state->fbheight, A, B, t1, t2);
 
-  std::string fsSource = createShader(g_presets[g_currentPreset].file);
-  loadPreset(vsSource, fsSource);
+  std::string fsSource = createShader(g_presets[preset].file);
+  loadPreset(preset, vsSource, fsSource);
+}
+
+extern "C" void Start()
+{
+  cout << "Start " << std::endl;
+  launch(g_currentPreset);
 }
 
 //-- GetInfo ------------------------------------------------------------------
@@ -845,6 +859,7 @@ extern "C" void ADDON_Destroy()
   cout << "ADDON_Destroy" << std::endl;
 
   unloadPreset();
+  unloadTextures();
 
   if (lpresets)
     delete[] lpresets, lpresets = nullptr;
