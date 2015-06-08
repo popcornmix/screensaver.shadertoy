@@ -375,6 +375,7 @@ int width = 0;
 int height = 0;
 
 int64_t initial_time;
+int bits_precision = 0;
 
 static unsigned char *framebuffer;
 
@@ -465,19 +466,6 @@ void loadPreset(std::string vsSource, std::string fsSource)
       if (g_presets[g_currentPreset].channel[i] >= 0)
         iChannel[i] = loadTexture(g_presets[g_currentPreset].channel[i]);
     }
-#if 0
-    state->fbwidth = width, state->fbwidth = height;
-#else
-    state->fbwidth = state->fbheight = 0;
-    float expected_fps = g_presets[g_currentPreset].fps * 1920 * 1080 / (width * height);
-    if (g_presets[g_currentPreset].fps && expected_fps < 30.0f) {
-      float A = 15e-3; // time taken for render from offscreen to onscreen 
-      float pixels = (1/30.0f - A) * expected_fps * width * height;
-      state->fbwidth = sqrtf(pixels * width / height);
-      state->fbheight = state->fbwidth * height / width;
-printf("expected fps=%f, pixels=%f %dx%d\n", expected_fps, pixels, state->fbwidth, state->fbheight);      
-    }
-#endif
     if (state->fbwidth && state->fbheight)
     {
       state->render_program = compileAndLinkProgram(render_vsSource.c_str(), render_fsSource.c_str());
@@ -532,8 +520,11 @@ static void RenderTo(GLuint shader)
     if (state->fbwidth && state->fbheight)
       w = state->fbwidth, h = state->fbheight;
 #endif
+    int64_t intt = PLATFORM::GetTimeMs() - initial_time;
+    if (bits_precision)
+      intt &= (1<<bits_precision)-1;
 
-    float t = (PLATFORM::GetTimeMs() - initial_time) / 1000.0f;
+    float t = intt / 1000.0f;
     GLfloat tv[] = { t, t, t, t };
 
     glUniform3f(iResolutionLoc, w, h, 0.0f);
@@ -636,9 +627,67 @@ extern "C" void Render()
   }
 }
 
+static int determine_bits_precision()
+{
+  std::string vsPrecisionSource = TO_STRING(
+	void mainImage( out vec4 fragColor, in vec2 fragCoord )
+	{
+	    float y = ( fragCoord.y / iResolution.y ) * 26.0;
+	    float x = 1.0 - ( fragCoord.x / iResolution.x );
+	    float b = fract( pow( 2.0, floor(y) ) + x );
+	    if (fract(y) >= 0.9)
+		b = 0.0;
+	    fragColor = vec4(b, b, b, 1.0 );
+	}
+  );
+  std::string fsPrecisionSource = fsHeader + "\n" + vsPrecisionSource + "\n" + fsFooter;
+
+  state->fbwidth = 32, state->fbheight = 26*10;
+  loadPreset(vsSource, fsPrecisionSource);
+  RenderTo(shadertoy_shader);
+  glFinish();
+
+  unsigned char *buffer = new unsigned char[state->fbwidth * state->fbheight * 4];
+  if (buffer)
+    glReadPixels(0, 0, state->fbwidth, state->fbheight, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
+  #if 0
+  for (int j=0; j<state->fbheight; j++) {
+    for (int i=0; i<state->fbwidth; i++) {
+      printf("%02x ", buffer[4*(j*state->fbwidth+i)]);
+    }
+    printf("\n");
+  }
+  #endif
+  int bits = 0;
+  unsigned char b = 0; 
+  for (int j=0; j<state->fbheight; j++) {
+    unsigned char c = buffer[4*(j*state->fbwidth+(state->fbwidth>>1))];
+    if (c && !b)
+      bits++;
+    b = c;
+  }
+  delete buffer;
+  unloadPreset();
+  return bits;
+}
+
 extern "C" void Start()
 {
   cout << "Start " << std::endl;
+
+  bits_precision = determine_bits_precision();
+  printf("bits=%d\n", bits_precision);
+
+    state->fbwidth = state->fbheight = 0;
+    float expected_fps = g_presets[g_currentPreset].fps * 1920 * 1080 / (width * height);
+    if (g_presets[g_currentPreset].fps && expected_fps < 30.0f) {
+      float A = 15e-3; // time taken for render from offscreen to onscreen 
+      float pixels = (1/30.0f - A) * expected_fps * width * height;
+      state->fbwidth = sqrtf(pixels * width / height);
+      state->fbheight = state->fbwidth * height / width;
+printf("expected fps=%f, pixels=%f %dx%d\n", expected_fps, pixels, state->fbwidth, state->fbheight);      
+    }
+
   std::string fsSource = createShader(g_presets[g_currentPreset].file);
   loadPreset(vsSource, fsSource);
 }
