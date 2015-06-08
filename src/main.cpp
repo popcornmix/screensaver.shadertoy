@@ -51,34 +51,33 @@ struct Preset {
   std::string name;
   std::string file;
   int channel[4];
-  float fps;
 };
 
 const std::vector<Preset> g_presets =
   {
-   {"Ball",                            "ball.frag.glsl",                 99,-1,-1,-1, 41},
-   {"Bleepy Blocks",                   "bleepyblocks.frag.glsl",         99,-1,-1,-1, 47},
-   {"Cellular",                        "cellular.frag.glsl",             -1,-1,-1,-1, 13},
-   {"Fast Clouds",                     "fastclouds.frag.glsl",           12,-1,-1,-1, 3},
-   {"Flaring",                         "flaring.frag.glsl",              12,-1,-1,-1, 16},
-   {"Interstellar",                    "stellar.frag.glsl",              14,-1,-1,-1, 5},
-   {"Interweaving Sine bands",         "sinebands.frag.glsl",            -1,-1,-1,-1, 31},
-   {"Juliasm",                         "juliasm.frag.glsl",              -1,-1,-1,-1, 13},
-   {"Julia Trap",                      "juliatrap.frag.glsl",            -1,-1,-1,-1, 18},
-   {"Noise",                           "noise.frag.glsl",                -1,-1,-1,-1, 34},
-   {"Noise Animation Electric",        "noiseanimelectric.frag.glsl",    12,-1,-1,-1, 14},
-   {"Noise Animation Lava",            "noiseanimlava.frag.glsl",        12,-1,-1,-1, 6},
-   {"Noise Animation Watery",          "noiseanimwatery.frag.glsl",      12,-1,-1,-1, 12},
-   {"Plasma Triangle",                 "plasmatriangle.frag.glsl",       11,-1,-1,-1, 14},
-   {"Plasma",                          "plasma.frag.glsl",               -1,-1,-1,-1, 20},
-   {"Plasma2",                         "plasma2.frag.glsl",              -1,-1,-1,-1, 14},
-   {"Silexars Creation",               "silexarst.frag.glsl",            -1,-1,-1,-1, 15},
-   {"Simple Fire",                     "simplefire.frag.glsl",           -1,-1,-1,-1, 7},
-   {"Sky at Night",                    "skyatnight.frag.glsl",           -1,-1,-1,-1, 4},
-   {"Spiral",                          "spiral.frag.glsl",               -1,-1,-1,-1, 18},
-   {"Warp",                            "warp.frag.glsl",                 99,-1,-1,-1, 28},
-   {"Water Caustic",                   "watercaustic.frag.glsl",         -1,-1,-1,-1, 5},
-   {"Worley Noise Waters",             "worleynoisewaters.frag.glsl",    -1,-1,-1,-1, 2},
+   {"Ball",                            "ball.frag.glsl",                 99,-1,-1,-1},
+   {"Bleepy Blocks",                   "bleepyblocks.frag.glsl",         99,-1,-1,-1},
+   {"Cellular",                        "cellular.frag.glsl",             -1,-1,-1,-1},
+   {"Fast Clouds",                     "fastclouds.frag.glsl",           12,-1,-1,-1},
+   {"Flaring",                         "flaring.frag.glsl",              12,-1,-1,-1},
+   {"Interstellar",                    "stellar.frag.glsl",              14,-1,-1,-1},
+   {"Interweaving Sine bands",         "sinebands.frag.glsl",            -1,-1,-1,-1},
+   {"Juliasm",                         "juliasm.frag.glsl",              -1,-1,-1,-1},
+   {"Julia Trap",                      "juliatrap.frag.glsl",            -1,-1,-1,-1},
+   {"Noise",                           "noise.frag.glsl",                -1,-1,-1,-1},
+   {"Noise Animation Electric",        "noiseanimelectric.frag.glsl",    12,-1,-1,-1},
+   {"Noise Animation Lava",            "noiseanimlava.frag.glsl",        12,-1,-1,-1},
+   {"Noise Animation Watery",          "noiseanimwatery.frag.glsl",      12,-1,-1,-1},
+   {"Plasma Triangle",                 "plasmatriangle.frag.glsl",       11,-1,-1,-1},
+   {"Plasma",                          "plasma.frag.glsl",               -1,-1,-1,-1},
+   {"Plasma2",                         "plasma2.frag.glsl",              -1,-1,-1,-1},
+   {"Silexars Creation",               "silexarst.frag.glsl",            -1,-1,-1,-1},
+   {"Simple Fire",                     "simplefire.frag.glsl",           -1,-1,-1,-1},
+   {"Sky at Night",                    "skyatnight.frag.glsl",           -1,-1,-1,-1},
+   {"Spiral",                          "spiral.frag.glsl",               -1,-1,-1,-1},
+   {"Warp",                            "warp.frag.glsl",                 99,-1,-1,-1},
+   {"Water Caustic",                   "watercaustic.frag.glsl",         -1,-1,-1,-1},
+   {"Worley Noise Waters",             "worleynoisewaters.frag.glsl",    -1,-1,-1,-1},
   };
 int g_currentPreset = 0;
 char** lpresets = nullptr;
@@ -668,6 +667,32 @@ static int determine_bits_precision()
   return bits;
 }
 
+static double measure_performance(int size)
+{
+  int iterations = -1;
+  std::string fsSource = createShader(g_presets[g_currentPreset].file);
+
+  state->fbwidth = state->fbheight = size;
+  loadPreset(vsSource, fsSource);
+
+  int64_t end, start;
+  do {
+    RenderTo(shadertoy_shader, state->effect_fb);
+#if defined(HAS_GLES)
+    if (state->render_program)
+      RenderTo(state->render_program, state->effect_fb);
+#endif
+    glFinish();
+    if (++iterations == 0)
+      start = PLATFORM::GetTimeMs();
+    end = PLATFORM::GetTimeMs();
+  } while (end - start < 50);
+  double t = (double)(end - start)/iterations;
+  //printf("%s %dx%d %.1fms = %.2f fps\n", __func__, size, size, t, 1000.0/t);
+  unloadPreset();
+  return t;
+}
+
 extern "C" void Start()
 {
   cout << "Start " << std::endl;
@@ -678,15 +703,25 @@ extern "C" void Start()
   bits_precision = max(bits_precision, 13);
   printf("bits=%d\n", bits_precision);
 
-    state->fbwidth = state->fbheight = 0;
-    float expected_fps = g_presets[g_currentPreset].fps * 1920 * 1080 / (width * height);
-    if (g_presets[g_currentPreset].fps && expected_fps < 30.0f) {
-      float A = 15e-3; // time taken for render from offscreen to onscreen 
-      float pixels = (1/30.0f - A) * expected_fps * width * height;
-      state->fbwidth = sqrtf(pixels * width / height);
-      state->fbheight = state->fbwidth * height / width;
-printf("expected fps=%f, pixels=%f %dx%d\n", expected_fps, pixels, state->fbwidth, state->fbheight);      
-    }
+  const int size1 = 256, size2=512;
+  double t1 = measure_performance(size1);
+  double t2 = measure_performance(size2);
+ 
+  double expected_fps = 40.0;
+  // time per pixel for rendering fragment shader
+  double B = (t2-t1)/(size2*size2-size1*size1);
+  // time to render to screen
+  double A = t2 - size2*size2 * B;
+  // how many pixels get the desired fps
+  double pixels = (1000.0/expected_fps - A) / B;
+  state->fbwidth = sqrtf(pixels * width / height);
+  if (state->fbwidth * 4 >= width * 3)
+    state->fbwidth = 0;
+  else if (state->fbwidth < 320)
+    state->fbwidth = 320;
+  state->fbheight = state->fbwidth * height / width;
+
+  printf("expected fps=%f, pixels=%f %dx%d (A:%f B:%f t1:%d t2:%d)\n", expected_fps, pixels, state->fbwidth, state->fbheight, A, B, t1, t2);      
 
   std::string fsSource = createShader(g_presets[g_currentPreset].file);
   loadPreset(vsSource, fsSource);
