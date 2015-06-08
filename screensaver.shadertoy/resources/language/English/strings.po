@@ -112,3 +112,22 @@ msgctxt "#30023"
 msgid "Cellular"
 msgstr ""
 
+msgctxt "#30024"
+msgid "Knight Rider"
+msgstr ""
+
+msgctxt "#30025"
+msgid "Colored Balls"
+msgstr ""
+
+msgctxt "#30026"
+msgid "Spiral Balls"
+msgstr ""
+
+msgctxt "#30027"
+msgid "Bumping Heart"
+msgstr ""
+
+msgctxt "#30028"
+msgid "Color Bubbles"
+msgstr ""
