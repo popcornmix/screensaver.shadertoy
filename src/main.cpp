@@ -376,7 +376,7 @@ int height = 0;
 
 int64_t initial_time;
 
-static char *framebuffer;
+static unsigned char *framebuffer;
 
 void unloadPreset() {
   if (shadertoy_shader) {
@@ -387,10 +387,12 @@ void unloadPreset() {
   if (state->framebuffer_texture)
   {
     glDeleteTextures(1, &state->framebuffer_texture);
+    state->framebuffer_texture = 0;
   }
   if (state->effect_fb)
   {
     glDeleteFramebuffers(1, &state->effect_fb);
+    state->effect_fb = 0;
   }
   if (state->render_program) {
     glDeleteProgram(state->render_program);
@@ -728,7 +730,7 @@ ADDON_STATUS ADDON_Create(void* hdl, void* props)
     glBindBuffer(GL_ARRAY_BUFFER, state->vertex_buffer);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertex_data), vertex_data, GL_STATIC_DRAW);
 #endif
-    framebuffer = new char[width * height * 4];
+    framebuffer = new unsigned char[width * height * 4];
     if (framebuffer)
       glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, framebuffer);
 
