@@ -676,6 +676,9 @@ extern "C" void Start()
   cout << "Start " << std::endl;
 
   bits_precision = determine_bits_precision();
+  // mali-400 has only 10 bits which means milliseond timer wraps after ~1 second.
+  // we'll fudge that up a bit as having a larger range is more important than ms accuracy
+  bits_precision = max(bits_precision, 13);
   printf("bits=%d\n", bits_precision);
 
     state->fbwidth = state->fbheight = 0;
