@@ -493,7 +493,7 @@ static uint64_t GetTimeStamp() {
     return tv.tv_sec*(uint64_t)1000000+tv.tv_usec;
 }
 
-static void RenderTo(GLuint shader)
+static void RenderTo(GLuint shader, GLuint effect_fb)
 {
   glUseProgram(shader);
 
@@ -562,10 +562,7 @@ static void RenderTo(GLuint shader)
 
 #if defined(HAS_GLES)
   // Draw the effect to a texture or direct to framebuffer
-  if (shader == shadertoy_shader)
-    glBindFramebuffer(GL_FRAMEBUFFER, state->effect_fb);
-  else
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  glBindFramebuffer(GL_FRAMEBUFFER, effect_fb);
 
   GLuint attr_vertex = shader == shadertoy_shader ? state->attr_vertex_e : state->attr_vertex_r;
   glBindBuffer(GL_ARRAY_BUFFER, state->vertex_buffer);
@@ -606,10 +603,10 @@ extern "C" void Render()
   glGetError();
   //cout << "Render" << std::endl;
   if (initialized) {
-    RenderTo(shadertoy_shader);
+    RenderTo(shadertoy_shader, state->effect_fb);
 #if defined(HAS_GLES)
     if (state->render_program)
-      RenderTo(state->render_program);
+      RenderTo(state->render_program, 0);
 #endif
     static int frames = 0;
     static uint64_t ts;
@@ -644,7 +641,7 @@ static int determine_bits_precision()
 
   state->fbwidth = 32, state->fbheight = 26*10;
   loadPreset(vsSource, fsPrecisionSource);
-  RenderTo(shadertoy_shader);
+  RenderTo(shadertoy_shader, state->effect_fb);
   glFinish();
 
   unsigned char *buffer = new unsigned char[state->fbwidth * state->fbheight * 4];
