@@ -535,13 +535,14 @@ static void RenderTo(GLuint shader, GLuint effect_fb)
 #if defined(HAS_GLES)
     glUniform2f(state->uScale, (GLfloat)width/state->fbwidth, (GLfloat)height/state->fbheight);
 #endif
-    time_t now = time(NULL);
-    tm *ltm = localtime(&now);
+    struct timeval tval;
+    gettimeofday(&tval, NULL);
+    tm *ltm = localtime(&tval.tv_sec);
 
     float year = 1900 + ltm->tm_year;
     float month = ltm->tm_mon;
     float day = ltm->tm_mday;
-    float sec = (ltm->tm_hour * 60 * 60) + (ltm->tm_min * 60) + ltm->tm_sec;
+    float sec = (ltm->tm_hour * 60 * 60) + (ltm->tm_min * 60) + ltm->tm_sec + 1e-6 * tval.tv_usec;
 
     glUniform4f(iDateLoc, year, month, day, sec);
 
