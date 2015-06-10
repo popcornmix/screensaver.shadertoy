@@ -58,6 +58,7 @@ const std::vector<Preset> g_presets =
    {"Ball",                            "ball.frag.glsl",                 99,-1,-1,-1},
    {"Bleepy Blocks",                   "bleepyblocks.frag.glsl",         99,-1,-1,-1},
    {"Cellular",                        "cellular.frag.glsl",             -1,-1,-1,-1},
+   {"Coloured Circles",                "colorcircles.frag.glsl",         -1,-1,-1,-1},
    {"Fast Clouds",                     "fastclouds.frag.glsl",           12,-1,-1,-1},
    {"Flaring",                         "flaring.frag.glsl",              12,-1,-1,-1},
    {"Interstellar",                    "stellar.frag.glsl",              14,-1,-1,-1},
@@ -77,7 +78,6 @@ const std::vector<Preset> g_presets =
    {"Spiral",                          "spiral.frag.glsl",               -1,-1,-1,-1},
    {"Warp",                            "warp.frag.glsl",                 99,-1,-1,-1},
    {"Water Caustic",                   "watercaustic.frag.glsl",         -1,-1,-1,-1},
-   {"Worley Noise Waters",             "worleynoisewaters.frag.glsl",    -1,-1,-1,-1},
   };
 int g_currentPreset = 0;
 char** lpresets = nullptr;

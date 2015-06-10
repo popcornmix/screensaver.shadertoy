@@ -101,7 +101,7 @@ msgid "Water Caustic"
 msgstr ""
 
 msgctxt "#30021"
-msgid "Worley Noise Waters"
+msgid "Coloured Circles"
 msgstr ""
 
 msgctxt "#30022"
