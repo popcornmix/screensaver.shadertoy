@@ -73,7 +73,6 @@ const std::vector<Preset> g_presets =
    {"Noise Animation Lava",            "noiseanimlava.frag.glsl",        12,-1,-1,-1},
    {"Noise Animation Watery",          "noiseanimwatery.frag.glsl",      12,-1,-1,-1},
    {"Plasma Triangle",                 "plasmatriangle.frag.glsl",       11,-1,-1,-1},
-   {"Plasma",                          "plasma.frag.glsl",               -1,-1,-1,-1},
    {"Plasma2",                         "plasma2.frag.glsl",              -1,-1,-1,-1},
    {"Silexars Creation",               "silexarst.frag.glsl",            -1,-1,-1,-1},
    {"Simple Fire",                     "simplefire.frag.glsl",           -1,-1,-1,-1},
