@@ -136,3 +136,7 @@ msgctxt "#30030"
 msgid "Deform Flower"
 msgstr ""
 
+msgctxt "#30031"
+msgid "Input Time"
+msgstr ""
+

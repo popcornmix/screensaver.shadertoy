@@ -66,6 +66,7 @@ const std::vector<Preset> g_presets =
    {"Flaring",                         "flaring.frag.glsl",              12,-1,-1,-1},
    {"Fractal Tiling",                  "fractaltiling.frag.glsl",        -1,-1,-1,-1},
    {"Glowing Thing",                   "glowingthing.frag.glsl",         -1,-1,-1,-1},
+   {"Input Time",                      "inputtime.frag.glsl",            -1,-1,-1,-1},
    {"Interstellar",                    "stellar.frag.glsl",              14,-1,-1,-1},
    {"Interweaving Sine bands",         "sinebands.frag.glsl",            -1,-1,-1,-1},
    {"Juliasm",                         "juliasm.frag.glsl",              -1,-1,-1,-1},
