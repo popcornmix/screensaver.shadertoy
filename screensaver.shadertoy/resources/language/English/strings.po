@@ -116,3 +116,7 @@ msgctxt "#30024"
 msgid "Fractal Tiling"
 msgstr ""
 
+msgctxt "#30025"
+msgid "Star Tunnel"
+msgstr ""
+

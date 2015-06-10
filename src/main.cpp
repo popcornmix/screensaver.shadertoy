@@ -77,6 +77,7 @@ const std::vector<Preset> g_presets =
    {"Simple Fire",                     "simplefire.frag.glsl",           -1,-1,-1,-1},
    {"Sky at Night",                    "skyatnight.frag.glsl",           -1,-1,-1,-1},
    {"Spiral",                          "spiral.frag.glsl",               -1,-1,-1,-1},
+   {"Star Tunnel",                     "startunnel.frag.glsl",           -1,-1,-1,-1},
    {"Warp",                            "warp.frag.glsl",                 99,-1,-1,-1},
    {"Water Caustic",                   "watercaustic.frag.glsl",         -1,-1,-1,-1},
   };
