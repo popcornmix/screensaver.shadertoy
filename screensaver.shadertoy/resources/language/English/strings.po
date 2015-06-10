@@ -120,3 +120,7 @@ msgctxt "#30025"
 msgid "Star Tunnel"
 msgstr ""
 
+msgctxt "#30026"
+msgid "Glowing Thing"
+msgstr ""
+
