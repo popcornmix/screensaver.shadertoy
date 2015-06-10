@@ -112,3 +112,7 @@ msgctxt "#30023"
 msgid "Cellular"
 msgstr ""
 
+msgctxt "#30024"
+msgid "Fractal Tiling"
+msgstr ""
+
