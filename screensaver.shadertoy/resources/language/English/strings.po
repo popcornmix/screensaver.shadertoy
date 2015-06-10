@@ -132,3 +132,7 @@ msgctxt "#30029"
 msgid "Basic Fractal"
 msgstr ""
 
+msgctxt "#30030"
+msgid "Deform Flower"
+msgstr ""
+
