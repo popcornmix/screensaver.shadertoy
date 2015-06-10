@@ -128,3 +128,7 @@ msgctxt "#30028"
 msgid "Fireball"
 msgstr ""
 
+msgctxt "#30029"
+msgid "Basic Fractal"
+msgstr ""
+

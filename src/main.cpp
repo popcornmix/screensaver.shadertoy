@@ -56,6 +56,7 @@ struct Preset {
 const std::vector<Preset> g_presets =
   {
    {"Ball",                            "ball.frag.glsl",                 99,-1,-1,-1},
+   {"Basic Fractal",                   "basicfractal.frag.glsl",         -1,-1,-1,-1},
    {"Bleepy Blocks",                   "bleepyblocks.frag.glsl",         99,-1,-1,-1},
    {"Cellular",                        "cellular.frag.glsl",             -1,-1,-1,-1},
    {"Coloured Circles",                "colorcircles.frag.glsl",         -1,-1,-1,-1},
