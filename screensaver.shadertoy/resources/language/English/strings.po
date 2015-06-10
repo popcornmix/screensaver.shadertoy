@@ -128,3 +128,7 @@ msgctxt "#30027"
 msgid "Venus"
 msgstr ""
 
+msgctxt "#30028"
+msgid "Fireball"
+msgstr ""
+
