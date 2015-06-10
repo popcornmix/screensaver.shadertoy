@@ -124,3 +124,7 @@ msgctxt "#30026"
 msgid "Glowing Thing"
 msgstr ""
 
+msgctxt "#30027"
+msgid "Venus"
+msgstr ""
+
