@@ -1,3 +1,36 @@
 <settings>
-  <setting id="preset" label="30000" type="select" lvalues="30100|30001|30029|30002|30023|30021|30030|30003|30028|30022|30024|30026|30031|30004|30005|30006|30007|30008|30009|30010|30011|30012|30014|30015|30016|30017|30018|30025|30027|30019|30020" default="0"/>
+  <setting id="preset" label="30000" type="select" default="0" lvalues="
+ 30100 Random
+|30001 Ball
+|30029 Basic Fractal
+|30023 Cellular
+|30002 Bleepy Blocks
+|30003 Interstellar
+|30021 Coloured Circles
+|30030 Deform Flower
+|30003 Fast Clouds
+|30028 Fireball
+|30022 Flaring
+|30024 Fractal Tiling
+|30026 Glowing Thing
+|30031 Input Time
+|30004 Interstellar
+|30005 Interweaving Sine Bands
+|30006 Juliasm
+|30007 Julia Trap
+|30008 Noise
+|30009 Noise Animation Electric
+|30010 Noise Animation Lave
+|30011 Noise Animation Watery
+|30012 Plasma Triangle
+|30014 Plasma2
+|30015 Silexars Creation
+|30016 Simple Fire
+|30017 Sky at Night
+|30018 Sprial
+|30025 Star Tunnel
+|30027 Venus
+|30019 Warp
+|30020 Water Caustic
+"/>
 </settings>
