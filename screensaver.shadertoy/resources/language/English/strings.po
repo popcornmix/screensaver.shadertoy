@@ -140,3 +140,7 @@ msgctxt "#30031"
 msgid "Input Time"
 msgstr ""
 
+msgctxt "#30032"
+msgid "Infinite Fall"
+msgstr ""
+
