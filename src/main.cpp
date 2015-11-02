@@ -61,6 +61,7 @@ const std::vector<Preset> g_presets =
    {"Cellular",                        "cellular.frag.glsl",             -1,-1,-1,-1},
    {"Coloured Circles",                "colorcircles.frag.glsl",         -1,-1,-1,-1},
    {"Deform Flower",                   "deformflower.frag.glsl",         -1,-1,-1,-1},
+   {"Dot Dot Dot",                     "dotdotdot.frag.glsl",            -1,-1,-1,-1},
    {"Fast Clouds",                     "fastclouds.frag.glsl",           12,-1,-1,-1},
    {"Fireball",                        "fireball.frag.glsl",             14,-1,-1,-1},
    {"Flaring",                         "flaring.frag.glsl",              12,-1,-1,-1},
