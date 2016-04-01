@@ -477,7 +477,6 @@ void loadPreset(int preset, std::string vsSource, std::string fsSource)
 #if defined(HAS_GLES)
   state->uScale         = glGetUniformLocation(shadertoy_shader, "uScale");
   state->attr_vertex_e  = glGetAttribLocation(shadertoy_shader,  "vertex");
-#endif
 
   state->render_program = compileAndLinkProgram(render_vsSource.c_str(), render_fsSource.c_str());
   state->uTexture       = glGetUniformLocation(state->render_program, "uTexture");
@@ -497,6 +496,7 @@ void loadPreset(int preset, std::string vsSource, std::string fsSource)
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, state->framebuffer_texture, 0);
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
   initial_time = PLATFORM::GetTimeMs();
+#endif
 }
 
 static uint64_t GetTimeStamp() {
@@ -648,6 +648,7 @@ extern "C" void Render()
   }
 }
 
+#ifdef HAS_GLES
 static int determine_bits_precision()
 {
   std::string vsPrecisionSource = TO_STRING(
@@ -718,9 +719,11 @@ static double measure_performance(int preset, int size)
   unloadPreset();
   return t;
 }
+#endif
 
 static void launch(int preset)
 {
+#ifdef HAS_GLES
   //get current viewport
   glGetIntegerv(GL_VIEWPORT, state->viewport);
 
@@ -729,6 +732,7 @@ static void launch(int preset)
   // we'll fudge that up a bit as having a larger range is more important than ms accuracy
   bits_precision = max(bits_precision, 13);
   printf("bits=%d\n", bits_precision);
+#endif
   
   unloadTextures();
   for (int i=0; i<4; i++) {
@@ -736,6 +740,7 @@ static void launch(int preset)
       iChannel[i] = loadTexture(g_presets[preset].channel[i]);
   }
 
+#ifdef HAS_GLES
   const int size1 = 256, size2=512;
   double t1 = measure_performance(preset, size1);
   double t2 = measure_performance(preset, size2);
@@ -755,6 +760,7 @@ static void launch(int preset)
   state->fbheight = state->fbwidth * height / width;
 
   printf("expected fps=%f, pixels=%f %dx%d (A:%f B:%f t1:%.1f t2:%.1f)\n", expected_fps, pixels, state->fbwidth, state->fbheight, A, B, t1, t2);
+#endif
 
   std::string fsSource = createShader(g_presets[preset].file);
   loadPreset(preset, vsSource, fsSource);
