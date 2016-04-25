@@ -23,8 +23,8 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
 	// get time
 	float mils = fract(iDate.w);
 	float secs = mod( floor(iDate.w),        60.0 );
-	float mins = mod( floor(iDate.w/60.0),   60.0 );
-	float hors = mod( floor(iDate.w/3600.0), 24.0 );
+	float mins = mod( (iDate.w/60.0),   60.0 );
+	float hors = mod( (iDate.w/3600.0), 24.0 );
     
 	vec2 uv = -1.0 + 2.0*fragCoord.xy / iResolution.xy;
 	uv.x *= iResolution.x/iResolution.y;
