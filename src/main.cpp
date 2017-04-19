@@ -772,15 +772,6 @@ extern "C" void Start()
   launch(g_currentPreset);
 }
 
-//-- GetInfo ------------------------------------------------------------------
-// Tell XBMC our requirements
-//-----------------------------------------------------------------------------
-extern "C" void GetInfo(SCR_INFO *pInfo)
-{
-  cout << "GetInfo" << std::endl;
-}
-
-
 //-- GetSubModules ------------------------------------------------------------
 // Return any sub modules supported by this vis
 //-----------------------------------------------------------------------------
