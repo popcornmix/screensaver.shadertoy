@@ -128,7 +128,7 @@ struct
 int g_numberTextures = 17;
 GLint g_textures[17] = { };
 
-void LogProps(SCR_PROPS *props) {
+void LogProps(AddonProps_Screensaver *props) {
   cout << "Props = {" << endl
        << "\t x: " << props->x << endl
        << "\t y: " << props->y << endl
@@ -822,7 +822,7 @@ extern "C" bool IsLocked()
 ADDON_STATUS ADDON_Create(void* hdl, void* props)
 {
   cout << "ADDON_Create" << std::endl;
-  SCR_PROPS *p = (SCR_PROPS *)props;
+  AddonProps_Screensaver *p = (AddonProps_Screensaver *)props;
 
   LogProps(p);
 
@@ -867,7 +867,7 @@ ADDON_STATUS ADDON_Create(void* hdl, void* props)
 // This dll must cease all runtime activities
 // !!! Add-on master function !!!
 //-----------------------------------------------------------------------------
-extern "C" void ADDON_Stop()
+extern "C" void Stop()
 {
   cout << "ADDON_Stop" << std::endl;
 }
@@ -916,16 +916,6 @@ extern "C" ADDON_STATUS ADDON_GetStatus()
 {
   cout << "ADDON_GetStatus" << std::endl;
   return ADDON_STATUS_OK;
-}
-
-//-- GetSettings --------------------------------------------------------------
-// Return the settings for XBMC to display
-// !!! Add-on master function !!!
-//-----------------------------------------------------------------------------
-extern "C" unsigned int ADDON_GetSettings(ADDON_StructSetting ***sSet)
-{
-  cout << "ADDON_GetSettings" << std::endl;
-  return 0;
 }
 
 //-- FreeSettings --------------------------------------------------------------
