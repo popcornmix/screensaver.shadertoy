@@ -26,12 +26,14 @@ else()
 endif()
 
 include_directories(${INCLUDES}
-                    ${KODI_INCLUDE_DIR}
+                    ${KODI_INCLUDE_DIR}/.. # Hack way with "/..", need bigger Kodi cmake rework to match right include ways
                     ${p8-platform_INCLUDE_DIRS}
                     ${CMAKE_INCLUDE_PATH})
 
 set(SHADERTOY_SOURCES src/lodepng.cpp
                       src/main.cpp)
+
+set(SHADERTOY_HEADERS src/lodepng.h)
 
 set(DEPLIBS ${DEPLIBS})
 

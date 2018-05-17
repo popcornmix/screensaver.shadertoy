@@ -18,7 +18,7 @@
  *
  */
 
-#include "xbmc_scr_dll.h"
+#include <kodi/addon-instance/Screensaver.h>
 #if defined(HAS_GLES)
 #include <GLES2/gl2.h>
 #include <EGL/egl.h>
@@ -127,20 +127,6 @@ struct
 
 int g_numberTextures = 17;
 GLint g_textures[17] = { };
-
-void LogProps(AddonProps_Screensaver *props) {
-  cout << "Props = {" << endl
-       << "\t x: " << props->x << endl
-       << "\t y: " << props->y << endl
-       << "\t width: " << props->width << endl
-       << "\t height: " << props->height << endl
-       << "\t pixelRatio: " << props->pixelRatio << endl
-       << "\t name: " << props->name << endl
-       << "\t presets: " << props->presets << endl
-       << "\t profile: " << props->profile << endl
-//       << "\t submodule: " << props->submodule << endl // Causes problems? Is it initialized?
-       << "}" << endl;
-}
 
 void LogAction(const char *message) {
   cout << "Action " << message << endl;
@@ -617,7 +603,7 @@ static void RenderTo(GLuint shader, GLuint effect_fb)
 //-- Render -------------------------------------------------------------------
 // Called once per frame. Do all rendering here.
 //-----------------------------------------------------------------------------
-extern "C" void Render()
+static void MyRender()
 {
   glGetError();
   //cout << "Render" << std::endl;
@@ -766,21 +752,6 @@ static void launch(int preset)
   loadPreset(preset, vsSource, fsSource);
 }
 
-extern "C" void Start()
-{
-  cout << "Start " << std::endl;
-  launch(g_currentPreset);
-}
-
-//-- GetSubModules ------------------------------------------------------------
-// Return any sub modules supported by this vis
-//-----------------------------------------------------------------------------
-extern "C" unsigned int GetSubModules(char ***names)
-{
-  cout << "GetSubModules" << std::endl;
-  return 0; // this vis supports 0 sub modules
-}
-
 //-- GetPresets ---------------------------------------------------------------
 // Return a list of presets to XBMC for display
 //-----------------------------------------------------------------------------
@@ -799,36 +770,24 @@ extern "C" unsigned int GetPresets(char ***presets)
   return g_presets.size();
 }
 
-//-- GetPreset ----------------------------------------------------------------
-// Return the index of the current playing preset
-//-----------------------------------------------------------------------------
-extern "C" unsigned GetPreset()
-{
-  return g_currentPreset;
-}
-
-//-- IsLocked -----------------------------------------------------------------
-// Returns true if this add-on use settings
-//-----------------------------------------------------------------------------
-extern "C" bool IsLocked()
-{
-  cout << "IsLocked" << std::endl;
-  return false;
-}
-
 //-- Create -------------------------------------------------------------------
 // Called on load. Addon should fully initalize or return error status
 //-----------------------------------------------------------------------------
-ADDON_STATUS ADDON_Create(void* hdl, void* props)
+static ADDON_STATUS MyCreate(int w, int h, std::string presets)
 {
   cout << "ADDON_Create" << std::endl;
-  AddonProps_Screensaver *p = (AddonProps_Screensaver *)props;
-
-  LogProps(p);
-
-  g_pathPresets = p->presets;
-  width = p->width;
-  height = p->height;
+  width = w;
+  height = h;
+  g_pathPresets = presets;
+  
+  int c = kodi::GetSettingInt("preset");
+  cout << "preset" << c << std::endl;
+  if (c < 0) c = 0;
+  if (c > g_presets.size()) c = g_presets.size();
+  if (c == 0)
+    g_currentPreset = (rand() >> 12) % g_presets.size();
+  else
+    g_currentPreset = c - 1;
 
 #if !defined(HAS_GLES)
   if (GLEW_OK != glewInit()) {
@@ -857,26 +816,15 @@ ADDON_STATUS ADDON_Create(void* hdl, void* props)
     initialized = true;
   }
 
-  if (!props)
-    return ADDON_STATUS_UNKNOWN;
-
-  return ADDON_STATUS_NEED_SAVEDSETTINGS;
+  return ADDON_STATUS_NEED_SETTINGS;
 }
 
-//-- Stop ---------------------------------------------------------------------
-// This dll must cease all runtime activities
-// !!! Add-on master function !!!
-//-----------------------------------------------------------------------------
-extern "C" void Stop()
-{
-  cout << "ADDON_Stop" << std::endl;
-}
 
 //-- Destroy ------------------------------------------------------------------
 // Do everything before unload of this add-on
 // !!! Add-on master function !!!
 //-----------------------------------------------------------------------------
-extern "C" void ADDON_Destroy()
+static void MyDestroy()
 {
   cout << "ADDON_Destroy" << std::endl;
 
@@ -898,85 +846,46 @@ extern "C" void ADDON_Destroy()
   initialized = false;
 }
 
-//-- HasSettings --------------------------------------------------------------
-// Returns true if this add-on use settings
-// !!! Add-on master function !!!
-//-----------------------------------------------------------------------------
-extern "C" bool ADDON_HasSettings()
+class CScreensaverToys
+  : public kodi::addon::CAddonBase,
+    public kodi::addon::CInstanceScreensaver
 {
-  cout << "ADDON_HasSettings" << std::endl;
+public:
+  CScreensaverToys();
+
+  virtual bool Start() override;
+  virtual void Stop() override;
+  virtual void Render() override;
+
+private:
+};
+
+////////////////////////////////////////////////////////////////////////////
+// Kodi has loaded us into memory, we should set our core values
+// here and load any settings we may have from our config file
+//
+CScreensaverToys::CScreensaverToys()
+{
+  MyCreate(Width(), Height(), Presets());
+}
+
+bool CScreensaverToys::Start()
+{
+  launch(g_currentPreset);
   return true;
 }
 
-//-- GetStatus ---------------------------------------------------------------
-// Returns the current Status of this visualisation
-// !!! Add-on master function !!!
-//-----------------------------------------------------------------------------
-extern "C" ADDON_STATUS ADDON_GetStatus()
+void CScreensaverToys::Render()
 {
-  cout << "ADDON_GetStatus" << std::endl;
-  return ADDON_STATUS_OK;
+  MyRender();
 }
 
-//-- FreeSettings --------------------------------------------------------------
-// Free the settings struct passed from XBMC
-// !!! Add-on master function !!!
-//-----------------------------------------------------------------------------
-
-extern "C" void ADDON_FreeSettings()
+// Kodi tells us to stop the screensaver
+// we should free any memory and release
+// any resources we have created.
+void CScreensaverToys::Stop()
 {
-  cout << "ADDON_FreeSettings" << std::endl;
+  MyDestroy();
 }
 
-//-- SetSetting ---------------------------------------------------------------
-// Set a specific Setting value (called from XBMC)
-// !!! Add-on master function !!!
-//-----------------------------------------------------------------------------
-extern "C" ADDON_STATUS ADDON_SetSetting(const char *strSetting, const void* value)
-{
-  cout << "ADDON_SetSetting " << strSetting << std::endl;
-  if (!strSetting || !value)
-    return ADDON_STATUS_UNKNOWN;
-
-  // TODO Someone _needs_ to fix this API in kodi, its terrible.
-  // a) Why not use GetSettings instead of hacking SetSettings like this?
-  // b) Why does it give index and not settings key?
-  // c) Seemingly random ###End which if you never write will while(true) the app
-  // d) Writes into const setting and value...
-  if (strcmp(strSetting, "###GetSavedSettings") == 0)
-  {
-    cout << "WTF...." << endl;
-    if (strcmp((char*)value, "0") == 0)
-    {
-      strcpy((char*)strSetting, "lastpresetidx");
-      sprintf ((char*)value, "%i", (int)g_currentPreset);
-    }
-    if (strcmp((char*)value, "1") == 0)
-    {
-      strcpy((char*)strSetting, "###End");
-    }
-
-    return ADDON_STATUS_OK;
-  }
-
-  int c = atoi((const char *)value);
-  if (strcmp(strSetting,"preset") == 0 && c >= 0 && c < g_presets.size()+1)
-  {
-    cout << "Setting preset from " << g_currentPreset << " to " << c << endl;
-    if (c == 0)
-      c = (rand() >> 12) % g_presets.size();
-    else
-      c--;
-    g_currentPreset = c;
-  }
-  return ADDON_STATUS_OK;
-}
-
-//-- Announce -----------------------------------------------------------------
-// Receive announcements from XBMC
-// !!! Add-on master function !!!
-//-----------------------------------------------------------------------------
-extern "C" void ADDON_Announce(const char *flag, const char *sender, const char *message, const void *data)
-{
-  cout << "ADDON_Announce " << flag << " " << sender << " " << message << std::endl;
-}
+ADDONCREATOR(CScreensaverToys);

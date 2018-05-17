@@ -1,37 +1,49 @@
-<settings>
-  <setting id="preset" label="30000" type="select" default="0" lvalues="
- 30100 Random
-|30001 Ball
-|30029 Basic Fractal
-|30002 Bleepy Blocks
-|30023 Cellular
-|30021 Coloured Circles
-|30030 Deform Flower
-|30033 Dot Dot Dot
-|30003 Fast Clouds
-|30028 Fireball
-|30022 Flaring
-|30024 Fractal Tiling
-|30026 Glowing Thing
-|30032 Infinite Fall
-|30031 Input Time
-|30004 Interstellar
-|30005 Interweaving Sine Bands
-|30006 Juliasm
-|30007 Julia Trap
-|30008 Noise
-|30009 Noise Animation Electric
-|30010 Noise Animation Lava
-|30011 Noise Animation Watery
-|30012 Plasma Triangle
-|30014 Plasma2
-|30015 Silexars Creation
-|30016 Simple Fire
-|30017 Sky at Night
-|30018 Sprial
-|30025 Star Tunnel
-|30027 Venus
-|30019 Warp
-|30020 Water Caustic
-"/>
+<settings version="1">
+  <section id="addon" label="30000" help="0">
+    <category id="main" label="30000" help="0">
+      <group id="1" label="0">
+        <setting id="preset" type="integer" label="30000" help="0">
+          <default>0</default>
+          <constraints>
+            <options>
+              <option label="30100">0</option>
+              <option label="30001">1</option>
+              <option label="30029">2</option>
+              <option label="30002">3</option>
+              <option label="30023">4</option>
+              <option label="30021">5</option>
+              <option label="30030">6</option>
+              <option label="30033">7</option>
+              <option label="30003">8</option>
+              <option label="30028">9</option>
+              <option label="30022">10</option>
+              <option label="30024">11</option>
+              <option label="30026">12</option>
+              <option label="30032">13</option>
+              <option label="30031">14</option>
+              <option label="30004">15</option>
+              <option label="30005">16</option>
+              <option label="30006">17</option>
+              <option label="30007">18</option>
+              <option label="30008">19</option>
+              <option label="30009">20</option>
+              <option label="30010">21</option>
+              <option label="30011">22</option>
+              <option label="30012">23</option>
+              <option label="30014">24</option>
+              <option label="30015">25</option>
+              <option label="30016">26</option>
+              <option label="30017">27</option>
+              <option label="30018">28</option>
+              <option label="30025">29</option>
+              <option label="30027">30</option>
+              <option label="30019">31</option>
+              <option label="30020">32</option>
+            </options>
+          </constraints>
+          <control type="list" format="string" />
+        </setting>
+      </group>
+    </category>
+  </section>
 </settings>
