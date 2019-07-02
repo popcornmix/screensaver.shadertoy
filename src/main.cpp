@@ -21,8 +21,6 @@
 #include <kodi/addon-instance/Screensaver.h>
 #if defined(HAS_GLES)
 #include <GLES2/gl2.h>
-#include <EGL/egl.h>
-#include <EGL/eglext.h>
 #include <assert.h>
 #define TO_STRING(...) #__VA_ARGS__
 #else
