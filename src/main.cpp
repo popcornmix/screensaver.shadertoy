@@ -43,6 +43,7 @@ const std::vector<Preset> CScreensaverShadertoy::g_presets =
   { "Effect Ringblobs",           "ringblobs.frag.glsl",          { "",          "",             "",          "" } },
   { "Ether",                      "ether.frag.glsl",              { "",          "",             "",          "" } },
   { "Fire",                       "fire.frag.glsl",               { "tex12.png", "",             "",          "" } },
+  { "Fractal Tiling",             "fractaltiling.frag.glsl",      { "",          "",             "",          "" } },
   { "Flaring 1",                  "flaringtype1.frag.glsl",       { "tex12.png", "",             "",          "" } },
   { "Flaring 2",                  "flaringtype2.frag.glsl",       { "tex12.png", "",             "",          "" } },
   { "Flaring 3",                  "flaringtype3.frag.glsl",       { "tex12.png", "",             "",          "" } },
