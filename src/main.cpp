@@ -52,6 +52,7 @@ const std::vector<Preset> CScreensaverShadertoy::g_presets =
   { "Input Time",                 "inputtime.frag.glsl",          { "",          "",             "",          "" } },
   { "Interstellar",               "stellar.frag.glsl",            { "tex12.png", "",             "",          "" } },
   { "Interweaving Sine bands",    "sinebands.frag.glsl",          { "",          "",             "",          "" } },
+  { "Infinite Fall",              "infinitefall.frag.glsl",       { "tex12.png" ,"",             "",          "" } },
   { "Julia Trap",                 "juliatrap.frag.glsl",          { "",          "",             "",          "" } },
   { "Layers Of Plasma",           "layersplasma.frag.glsl",       { "",          "",             "",          "" } },
   { "Liquid Spectrum",            "liquidspectrum.frag.glsl",     { "",          "",             "",          "" } },
