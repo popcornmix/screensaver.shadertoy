@@ -39,6 +39,7 @@ const std::vector<Preset> CScreensaverShadertoy::g_presets =
   { "Classic RGB Plasma",         "rgbplasma.frag.glsl",          { "",          "",             "",          "" } },
   { "Coloured Circles",           "colorcircles.frag.glsl",       { "",          "",             "",          "" } },
   { "Dance Floor",                "dancefloor.frag.glsl",         { "",          "",             "",          "" } },
+  { "Dot Dot Dot",                "dotdotdot.frag.glsl",          { "",          "",             "",          "" } },
   { "Effect Ringblobs",           "ringblobs.frag.glsl",          { "",          "",             "",          "" } },
   { "Ether",                      "ether.frag.glsl",              { "",          "",             "",          "" } },
   { "Fire",                       "fire.frag.glsl",               { "tex12.png", "",             "",          "" } },
