@@ -46,6 +46,7 @@ const std::vector<Preset> CScreensaverShadertoy::g_presets =
   { "Flaring 3",                  "flaringtype3.frag.glsl",       { "tex12.png", "",             "",          "" } },
   { "Flaring 4",                  "flaringtype4.frag.glsl",       { "tex12.png", "",             "",          "" } },
   { "Flaring 5",                  "flaringtype5.frag.glsl",       { "tex12.png", "",             "",          "" } },
+  { "Input Time",                 "inputtime.frag.glsl",          { "",          "",             "",          "" } },
   { "Interstellar",               "stellar.frag.glsl",            { "tex12.png", "",             "",          "" } },
   { "Interweaving Sine bands",    "sinebands.frag.glsl",          { "",          "",             "",          "" } },
   { "Julia Trap",                 "juliatrap.frag.glsl",          { "",          "",             "",          "" } },
