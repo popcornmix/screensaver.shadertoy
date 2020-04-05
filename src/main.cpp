@@ -35,6 +35,7 @@ const std::vector<Preset> CScreensaverShadertoy::g_presets =
   { "Bob Scanline",               "blobandscsanline.glsl",        { "",          "",             "",          "" } },
   { "Blobs",                      "blobs.frag.glsl",              { "",          "",             "",          "" } },
   { "Blue Fire",                  "bluefire.frag.glsl",           { "tex12.png", "",             "",          "" } },
+  { "Cellular",                   "cellular.frag.glsl",           { "",          "",             "",          "" } },
   { "Classic RGB Plasma",         "rgbplasma.frag.glsl",          { "",          "",             "",          "" } },
   { "Dance Floor",                "dancefloor.frag.glsl",         { "",          "",             "",          "" } },
   { "Effect Ringblobs",           "ringblobs.frag.glsl",          { "",          "",             "",          "" } },
